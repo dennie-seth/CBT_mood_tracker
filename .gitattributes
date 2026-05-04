@@ -1,0 +1,10 @@
+* text=auto eol=lf
+
+# Shell scripts and Dockerfiles must always use LF, otherwise containers fail
+# with "bad interpreter: /bin/sh^M: no such file or directory".
+*.sh text eol=lf
+Dockerfile text eol=lf
+
+# Binary
+*.png binary
+*.pdf binary

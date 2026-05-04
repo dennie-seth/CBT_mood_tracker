@@ -4,9 +4,14 @@ import asyncio
 
 import structlog
 from aiogram import Bot, Dispatcher
-from aiogram.client.default import DefaultBotProperties
-from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
+
+
+def make_bot(token: str) -> Bot:
+    # No default parse_mode: handlers send plain text. Setting HTML/Markdown
+    # globally would break messages that contain literal angle brackets
+    # (e.g. "<text>" placeholders in HELP_TEXT) or markdown-special chars.
+    return Bot(token=token)
 
 from app.bot.handlers import register_all
 from app.bot.middlewares.auth import AllowlistMiddleware
@@ -25,10 +30,7 @@ async def main() -> None:
 
     container = build_container(settings)
 
-    bot = Bot(
-        token=settings.bot_token,
-        default=DefaultBotProperties(parse_mode=ParseMode.HTML),
-    )
+    bot = make_bot(settings.bot_token)
     dp = Dispatcher(storage=MemoryStorage())
 
     # Order matters: outermost first.
