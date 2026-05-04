@@ -2,7 +2,18 @@ from __future__ import annotations
 
 from aiogram import Dispatcher
 
-from app.bot.handlers import ask, chart, export, journal, log, quick, start, today, tz
+from app.bot.handlers import (
+    ask,
+    chart,
+    export,
+    journal,
+    log,
+    quick,
+    schedule,
+    start,
+    today,
+    tz,
+)
 
 
 def register_all(dp: Dispatcher) -> None:
@@ -12,6 +23,7 @@ def register_all(dp: Dispatcher) -> None:
     dp.include_router(journal.router)
     dp.include_router(today.router)
     dp.include_router(tz.router)
+    dp.include_router(schedule.router)
     dp.include_router(ask.router)
     dp.include_router(chart.router)
     dp.include_router(export.router)

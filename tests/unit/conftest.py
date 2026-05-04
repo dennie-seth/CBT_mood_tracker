@@ -11,8 +11,10 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
+from app.domain.models import User
 from app.infrastructure.crypto import FernetCipher
 from app.infrastructure.fsm_models import FsmState
+from app.infrastructure.schedule_models import SchedulePrefs
 
 
 @pytest_asyncio.fixture()
@@ -37,3 +39,21 @@ async def fsm_sm() -> AsyncIterator[async_sessionmaker[AsyncSession]]:
 @pytest.fixture()
 def cipher() -> FernetCipher:
     return FernetCipher([Fernet.generate_key().decode()])
+
+
+@pytest_asyncio.fixture()
+async def schedule_sm() -> AsyncIterator[async_sessionmaker[AsyncSession]]:
+    """SQLite in-memory engine with `users` + `schedule_prefs` tables only.
+
+    Skips Entry (Postgres-only ARRAY/JSONB) and FsmState (not needed here)
+    so each test starts with a minimal, fast schema.
+    """
+    engine = create_async_engine("sqlite+aiosqlite:///:memory:", future=True)
+    async with engine.begin() as conn:
+        await conn.run_sync(User.__table__.create)
+        await conn.run_sync(SchedulePrefs.__table__.create)
+    sm = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
+    try:
+        yield sm
+    finally:
+        await engine.dispose()
