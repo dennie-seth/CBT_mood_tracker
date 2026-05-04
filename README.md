@@ -57,7 +57,8 @@ The bot's `/help` lists every command with a *use-case* sentence — when to rea
 | `/skip` | Skipping a plan, with optional reason |
 | `/today`, `/week` | Today's / last 7 days' entries |
 | `/chart [7d\|30d\|90d\|all]` | Spotting trends visually (PNG chart) |
-| `/export [7d\|30d\|90d\|all]` | Sharing with a therapist or archiving a period (PDF) |
+| `/export [7d\|30d\|90d\|all]` | Numeric-only PDF for a private snapshot |
+| `/therapist [7d\|30d\|90d\|all]` | Clinician-ready PDF: thought records, BA outcomes, notes + numeric trends |
 | `/ask <question>` | Analysis the built-in views don't cover |
 | `/schedule` | Inspecting current daily / weekly auto-summary settings |
 | `/dailyat 21:00` | Enable an evening Haiku summary in your tz |

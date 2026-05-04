@@ -13,6 +13,7 @@ from app.bot.handlers import (
     quick,
     schedule,
     start,
+    therapist,
     today,
     tz,
 )
@@ -31,3 +32,4 @@ def register_all(dp: Dispatcher) -> None:
     dp.include_router(ask.router)
     dp.include_router(chart.router)
     dp.include_router(export.router)
+    dp.include_router(therapist.router)
