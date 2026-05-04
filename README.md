@@ -66,6 +66,7 @@ The bot's `/help` lists every command with a *use-case* sentence — when to rea
 | `/weeklyat sun 21:00` | Enable a weekly Haiku summary on this day & time |
 | `/weeklyoff` | Disable weekly summary |
 | `/tz <IANA>` | Once on first login (e.g. `/tz Europe/Berlin`) — day boundaries depend on it |
+| `/lang <en\|ru>` | Switch the bot's interface language (auto-detected from Telegram on first `/start`) |
 | `/cancel` | Abort the current guided step |
 
 ## What gets tracked
@@ -132,6 +133,10 @@ FERNET_KEYS=<new_key>,<old_key>
 ```
 
 The first key encrypts new ciphertext. All keys are tried on decrypt. Once the old key is removed from the env, only data re-encrypted with the new key remains readable — re-encrypt historical rows before deleting an old key.
+
+## Languages
+
+The bot ships English and Russian UI strings. On first `/start`, language is auto-detected from Telegram's `language_code` (`ru*` → Russian, otherwise English). Override at any time with `/lang en` or `/lang ru`. Strings live in [app/bot/i18n.py](app/bot/i18n.py); chart axes and PDF page titles are intentionally English-only (data labels are short and matplotlib font handling is fragile across scripts). AI responses (`/ask`, daily/weekly summaries) are produced in the user's selected language — the system prompt is told explicitly.
 
 ## Auto summaries
 

@@ -7,11 +7,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai.tools import ToolDispatcher
 from app.bot.deps import entry_service
+from app.bot.i18n import t
 from app.di import Container
 from app.domain.models import User
+from app.infrastructure.repositories.entry_repo import SqlEntryRepository
 from app.services.analysis_service import AnalysisService
 from app.services.time import today_in_tz
-from app.infrastructure.repositories.entry_repo import SqlEntryRepository
 
 router = Router()
 
@@ -25,7 +26,7 @@ async def cmd_ask(
     container: Container,
 ) -> None:
     if not command.args:
-        await message.answer("Usage: /ask <question>")
+        await message.answer(t(user.language, "ask.usage"))
         return
 
     repo = SqlEntryRepository(session)
@@ -48,6 +49,7 @@ async def cmd_ask(
         question=command.args.strip(),
         dispatcher=dispatcher,
         today=today,
+        target_language=user.language,
     )
 
     if answer.text:

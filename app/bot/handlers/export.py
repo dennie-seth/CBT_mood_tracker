@@ -5,6 +5,7 @@ from aiogram.filters import Command, CommandObject
 from aiogram.types import BufferedInputFile, CallbackQuery, Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.bot.i18n import t
 from app.bot.keyboards import period_picker
 from app.di import Container
 from app.domain.models import User
@@ -34,7 +35,11 @@ async def _send_pdf(
     pdf = container.pdf_service.report(df, start=start, end=end)
     file = BufferedInputFile(pdf, filename=f"report_{start}_{end}.pdf")
     await bot.send_document(
-        chat_id, file, caption=f"Report {start.isoformat()} → {end.isoformat()}"
+        chat_id, file,
+        caption=t(
+            user.language, "export.caption",
+            start=start.isoformat(), end=end.isoformat(),
+        ),
     )
 
 
@@ -47,7 +52,10 @@ async def cmd_export(
     container: Container,
 ) -> None:
     if not command.args:
-        await message.answer("Pick a period:", reply_markup=period_picker("export"))
+        await message.answer(
+            t(user.language, "export.pick_period"),
+            reply_markup=period_picker("export"),
+        )
         return
     await _send_pdf(
         message.chat.id, message.bot, user, session, container, command.args.strip().split()[0]

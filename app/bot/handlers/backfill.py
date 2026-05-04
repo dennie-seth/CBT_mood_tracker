@@ -9,7 +9,8 @@ from aiogram.types import Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.bot.deps import entry_service
-from app.domain.enums import METRIC_LABELS, NUMERIC_METRICS, MetricType
+from app.bot.i18n import metric_label, t
+from app.domain.enums import NUMERIC_METRICS, MetricType
 from app.domain.models import User
 from app.infrastructure.crypto import FernetCipher
 from app.services.time import parse_relative_date
@@ -20,17 +21,12 @@ router = Router()
 def split_backfill_args(args: str) -> tuple[str, str, str]:
     """Split '/backfill <date> <metric> <value>' args.
 
-    Returns (date_str, metric_type_str, rest). Recognises the 3-token
-    'N day(s) ago' date phrase explicitly so it parses unambiguously.
+    Recognises the 3-token 'N day(s) ago' phrase explicitly.
     Raises ValueError on too few tokens.
     """
     tokens = args.split()
     if len(tokens) < 3:
-        raise ValueError(
-            "usage: /backfill <date> <metric> <value>\n"
-            "examples: /backfill yesterday mood 7\n"
-            "          /backfill 3 days ago note Felt rough."
-        )
+        raise ValueError("too few tokens")
     if (
         len(tokens) >= 5
         and tokens[1].lower() in ("day", "days")
@@ -41,11 +37,6 @@ def split_backfill_args(args: str) -> tuple[str, str, str]:
 
 
 def _local_noon_utc(d, tz_name: str) -> datetime:
-    """A timezone-aware UTC datetime corresponding to noon on `d` in the user's tz.
-
-    Noon (instead of, say, 00:00) keeps `entry_date` stable under DST edges
-    when EntryService converts back to user-local for bucketing.
-    """
     tz = pytz.timezone(tz_name)
     return tz.localize(datetime.combine(d, time(12, 0))).astimezone(pytz.utc)
 
@@ -59,46 +50,44 @@ async def cmd_backfill(
     cipher: FernetCipher,
 ) -> None:
     if not command.args:
-        await message.answer(
-            "Usage: /backfill <date> <metric> <value>\n\n"
-            "Date forms: today, yesterday, '3 days ago', or YYYY-MM-DD.\n"
-            "Examples:\n"
-            "  /backfill yesterday mood 7\n"
-            "  /backfill 2026-05-04 sleep_hours 7.5\n"
-            "  /backfill 3 days ago note Felt rough but the walk helped."
-        )
+        await message.answer(t(user.language, "backfill.usage"))
         return
 
     try:
         date_str, metric_str, rest = split_backfill_args(command.args)
-    except ValueError as e:
-        await message.answer(str(e))
+    except ValueError:
+        await message.answer(t(user.language, "backfill.usage"))
         return
 
     try:
         target_date = parse_relative_date(date_str, user.timezone)
     except ValueError as e:
-        await message.answer(f"Date error: {e}")
+        await message.answer(
+            t(user.language, "backfill.bad_date", raw=date_str, err=e)
+        )
         return
 
     try:
         metric = MetricType(metric_str)
     except ValueError:
         await message.answer(
-            f"Unknown metric: {metric_str!r}. See /help for the metric list."
+            t(
+                user.language, "backfill.bad_metric",
+                raw=metric_str,
+                choices=", ".join(m.value for m in MetricType),
+            )
         )
         return
 
     svc = entry_service(session, cipher)
     recorded_at = _local_noon_utc(target_date, user.timezone)
+    label = metric_label(metric, user.language)
 
     if metric in NUMERIC_METRICS:
         try:
             value = float(rest.replace(",", "."))
         except ValueError:
-            await message.answer(
-                f"{METRIC_LABELS[metric]} expects a number (e.g. 7 or 7.5)."
-            )
+            await message.answer(t(user.language, "backfill.bad_value", raw=rest))
             return
         try:
             dto = await svc.create(
@@ -107,15 +96,28 @@ async def cmd_backfill(
         except ValueError as e:
             await message.answer(str(e))
             return
-    else:
-        try:
-            dto = await svc.create(
-                user, metric, value_text=rest.strip(), recorded_at=recorded_at
+        await message.answer(
+            t(
+                user.language, "backfill.saved_numeric",
+                label=label, value=value, date=dto.entry_date.isoformat(),
             )
-        except ValueError as e:
-            await message.answer(str(e))
-            return
+        )
+        return
 
+    text = rest.strip()
+    if not text:
+        await message.answer(t(user.language, "backfill.need_text", label=label))
+        return
+    try:
+        dto = await svc.create(
+            user, metric, value_text=text, recorded_at=recorded_at
+        )
+    except ValueError as e:
+        await message.answer(str(e))
+        return
     await message.answer(
-        f"Backfilled {METRIC_LABELS[metric]} for {dto.entry_date.isoformat()}."
+        t(
+            user.language, "backfill.saved_text",
+            label=label, date=dto.entry_date.isoformat(),
+        )
     )

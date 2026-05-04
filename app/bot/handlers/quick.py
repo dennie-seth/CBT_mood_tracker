@@ -7,9 +7,10 @@ from aiogram.types import CallbackQuery, Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.bot.deps import entry_service
+from app.bot.i18n import metric_label, t
 from app.bot.keyboards import scale_1_to_10
 from app.bot.states import QuickFlow
-from app.domain.enums import METRIC_LABELS, MetricType
+from app.domain.enums import MetricType
 from app.domain.models import User
 from app.infrastructure.crypto import FernetCipher
 
@@ -29,11 +30,12 @@ QUICK_COMMANDS: dict[str, MetricType] = {
 
 
 def _make_handler(cmd: str, metric: MetricType):
-    async def handler(message: Message, state: FSMContext) -> None:
+    async def handler(message: Message, state: FSMContext, user: User) -> None:
         await state.set_state(QuickFlow.pick_value)
         await state.update_data(metric=metric.value)
         await message.answer(
-            f"{METRIC_LABELS[metric]} — pick 1-10:",
+            t(user.language, "log.enter_numeric",
+              label=metric_label(metric, user.language)),
             reply_markup=scale_1_to_10(callback_prefix="quick"),
         )
 
@@ -45,12 +47,11 @@ for _cmd, _metric in QUICK_COMMANDS.items():
     router.message.register(_make_handler(_cmd, _metric), Command(_cmd))
 
 
-# Sleep duration is special: requires a float, not a 1-10 scale.
 @router.message(Command("sleephours"))
-async def cmd_sleephours(message: Message, state: FSMContext) -> None:
+async def cmd_sleephours(message: Message, state: FSMContext, user: User) -> None:
     await state.set_state(QuickFlow.pick_value)
     await state.update_data(metric=MetricType.SLEEP_HOURS.value)
-    await message.answer("How many hours did you sleep? (e.g. 7.5)")
+    await message.answer(t(user.language, "log.enter_sleep_hours"))
 
 
 @router.callback_query(QuickFlow.pick_value, F.data.startswith("quick:"))
@@ -70,7 +71,11 @@ async def quick_value_chosen(
     dto = await svc.create(user, metric, value_numeric=float(value))
     await state.clear()
     await cb.message.edit_text(
-        f"Logged {METRIC_LABELS[metric]} = {value} for {dto.entry_date.isoformat()}."
+        t(
+            user.language, "log.saved_numeric",
+            label=metric_label(metric, user.language),
+            value=value, date=dto.entry_date.isoformat(),
+        )
     )
     await cb.answer()
 
@@ -89,7 +94,7 @@ async def quick_value_typed(
     try:
         value = float(message.text.replace(",", "."))
     except ValueError:
-        await message.answer("Please send a number (e.g. 7 or 7.5).")
+        await message.answer(t(user.language, "err.send_number"))
         return
     data = await state.get_data()
     metric = MetricType(data["metric"])
@@ -97,5 +102,9 @@ async def quick_value_typed(
     dto = await svc.create(user, metric, value_numeric=value)
     await state.clear()
     await message.answer(
-        f"Logged {METRIC_LABELS[metric]} = {value} for {dto.entry_date.isoformat()}."
+        t(
+            user.language, "log.saved_numeric",
+            label=metric_label(metric, user.language),
+            value=value, date=dto.entry_date.isoformat(),
+        )
     )

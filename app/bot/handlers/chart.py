@@ -5,6 +5,7 @@ from aiogram.filters import Command, CommandObject
 from aiogram.types import BufferedInputFile, CallbackQuery, Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.bot.i18n import t
 from app.bot.keyboards import period_picker
 from app.di import Container
 from app.domain.models import User
@@ -40,7 +41,9 @@ async def _send_chart(
     df = await analysis.daily_summary(user.id, start, end)
     png = container.chart_service.line(df)
     file = BufferedInputFile(png, filename=f"chart_{start}_{end}.png")
-    await bot.send_photo(chat.id, file, caption=f"{start.isoformat()} → {end.isoformat()}")
+    await bot.send_photo(
+        chat.id, file, caption=f"{start.isoformat()} → {end.isoformat()}"
+    )
 
 
 @router.message(Command("chart"))
@@ -52,9 +55,14 @@ async def cmd_chart(
     container: Container,
 ) -> None:
     if not command.args:
-        await message.answer("Pick a period:", reply_markup=period_picker("chart"))
+        await message.answer(
+            t(user.language, "chart.pick_period"),
+            reply_markup=period_picker("chart"),
+        )
         return
-    await _send_chart(message, user, session, container, command.args.strip().split()[0])
+    await _send_chart(
+        message, user, session, container, command.args.strip().split()[0]
+    )
 
 
 @router.callback_query(F.data.startswith("chart:"))
