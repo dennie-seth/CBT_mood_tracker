@@ -20,6 +20,7 @@ class MetricType(StrEnum):
     SYMPTOM = "symptom"
     THOUGHT_RECORD = "thought_record"
     ACTIVITY = "activity"
+    ACTIVITY_PLAN = "activity_plan"
     SUBSTANCE = "substance"
     TRIGGER = "trigger"
     COPING = "coping"
@@ -46,6 +47,7 @@ TEXT_METRICS: frozenset[MetricType] = frozenset(
         MetricType.SYMPTOM,
         MetricType.THOUGHT_RECORD,
         MetricType.ACTIVITY,
+        MetricType.ACTIVITY_PLAN,
         MetricType.SUBSTANCE,
         MetricType.TRIGGER,
         MetricType.COPING,
@@ -68,6 +70,7 @@ METRIC_LABELS: dict[MetricType, str] = {
     MetricType.SYMPTOM: "Body symptom",
     MetricType.THOUGHT_RECORD: "Thought record",
     MetricType.ACTIVITY: "Activity",
+    MetricType.ACTIVITY_PLAN: "Behavioral activation plan",
     MetricType.SUBSTANCE: "Substance / medication",
     MetricType.TRIGGER: "Trigger",
     MetricType.COPING: "Coping strategy",

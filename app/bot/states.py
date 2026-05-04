@@ -21,3 +21,17 @@ class ThoughtFlow(StatesGroup):
 
 class JournalFlow(StatesGroup):
     enter_text = State()
+
+
+class ActivateFlow(StatesGroup):
+    plan_text = State()
+    pick_when = State()
+    pick_predicted_effect = State()
+
+
+class DoneFlow(StatesGroup):
+    pick_actual_effect = State()
+
+
+class SkipFlow(StatesGroup):
+    enter_reason = State()

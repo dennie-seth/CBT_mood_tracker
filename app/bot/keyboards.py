@@ -45,6 +45,43 @@ def metric_picker(callback_prefix: str = "metric") -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
+def plan_when_picker(callback_prefix: str = "plan_when") -> InlineKeyboardMarkup:
+    """4-button date picker for /activate: today / tomorrow / +2 / +3 days.
+
+    Callback data carries the offset in days, parsed by the handler against
+    the user's local today.
+    """
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="today", callback_data=f"{callback_prefix}:0"),
+                InlineKeyboardButton(text="tomorrow", callback_data=f"{callback_prefix}:1"),
+                InlineKeyboardButton(text="+2 days", callback_data=f"{callback_prefix}:2"),
+                InlineKeyboardButton(text="+3 days", callback_data=f"{callback_prefix}:3"),
+            ]
+        ]
+    )
+
+
+def plan_picker(plans, callback_prefix: str) -> InlineKeyboardMarkup:
+    """Inline list of open BA plans, one button per plan.
+
+    Each button's text is "<weekday short> <date> — <truncated plan_text>";
+    callback data is "<prefix>:<entry_id>". Callback data is capped at 64 bytes
+    by Telegram, so the prefix should be short.
+    """
+    rows: list[list[InlineKeyboardButton]] = []
+    for p in plans:
+        plan_text = (p.extra or {}).get("plan_text", "(no description)")
+        snippet = plan_text if len(plan_text) <= 32 else plan_text[:29] + "…"
+        weekday = p.entry_date.strftime("%a")
+        label = f"{weekday} {p.entry_date.isoformat()} — {snippet}"
+        rows.append(
+            [InlineKeyboardButton(text=label, callback_data=f"{callback_prefix}:{p.id}")]
+        )
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
 def period_picker(callback_prefix: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[

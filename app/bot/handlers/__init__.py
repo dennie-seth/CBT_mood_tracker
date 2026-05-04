@@ -3,6 +3,7 @@ from __future__ import annotations
 from aiogram import Dispatcher
 
 from app.bot.handlers import (
+    activate,
     ask,
     backfill,
     chart,
@@ -23,6 +24,7 @@ def register_all(dp: Dispatcher) -> None:
     dp.include_router(log.router)
     dp.include_router(backfill.router)
     dp.include_router(journal.router)
+    dp.include_router(activate.router)
     dp.include_router(today.router)
     dp.include_router(tz.router)
     dp.include_router(schedule.router)

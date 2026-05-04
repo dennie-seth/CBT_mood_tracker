@@ -14,8 +14,13 @@ DAILY_PROMPT = (
     "(3) Add ONE supportive tip grounded in what you saw. "
     "(4) If today has no entries at all, send a brief, warm acknowledgement and "
     "a single low-effort reflection prompt — do not lecture. "
+    "(5) Also call `query_entries` with metric_types=['activity_plan'] over the "
+    "last 14 days. If any have extra.status == 'scheduled' and "
+    "extra.planned_for <= today (user's tz), mention them in ONE sentence "
+    "(e.g. 'You have N pending plan(s) for today: …'). Don't lecture, don't "
+    "repeat if there are none. "
     "Reply in the user's language as inferred from recent entries; default to English. "
-    "Keep it under ~120 words."
+    "Keep it under ~140 words."
 )
 
 

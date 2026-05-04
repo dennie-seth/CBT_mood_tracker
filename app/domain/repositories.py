@@ -33,6 +33,17 @@ class EntryRepository(Protocol):
         """Returns (entry_date, metric_type, avg_numeric, count) tuples."""
         ...
 
+    async def get_for_user(self, entry_id: int, user_id: int) -> Entry | None:
+        """Load by id with an ownership filter — single chokepoint for AuthZ
+        on entry mutation. Returns None if the entry doesn't exist OR belongs
+        to another user."""
+        ...
+
+    async def exists(self, entry_id: int) -> bool:
+        """Existence probe (no row data) — used purely to discriminate
+        'not yours' from 'doesn't exist' when an authorisation check fails."""
+        ...
+
 
 __all__ = [
     "UserRepository",
