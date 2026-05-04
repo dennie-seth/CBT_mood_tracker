@@ -7,6 +7,7 @@ from app.bot.handlers import (
     ask,
     backfill,
     chart,
+    checkins,
     export,
     journal,
     lang,
@@ -31,6 +32,7 @@ def register_all(dp: Dispatcher) -> None:
     dp.include_router(tz.router)
     dp.include_router(lang.router)
     dp.include_router(schedule.router)
+    dp.include_router(checkins.router)
     dp.include_router(ask.router)
     dp.include_router(chart.router)
     dp.include_router(export.router)

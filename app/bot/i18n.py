@@ -128,6 +128,39 @@ EN: dict[str, str] = {
     "sched.weeklyat.bad_time": "Bad time '{raw}'. Use HH:MM.",
     "sched.weeklyat.set": "Weekly summary enabled on {dow} {time} ({tz}).",
     "sched.weeklyoff.set": "Weekly summary disabled.",
+    # /checkins (proactive anomaly probes)
+    "checkins.show.on": (
+        "Anomaly check-ins: ON. I'll send a gentle nudge if mood, sleep "
+        "or anxiety look unusual. Disable with /checkins off."
+    ),
+    "checkins.show.off": (
+        "Anomaly check-ins: OFF. Enable with /checkins on to get a "
+        "gentle nudge if mood, sleep or anxiety look unusual."
+    ),
+    "checkins.set.on": (
+        "Anomaly check-ins enabled. I'll send at most one a day, only "
+        "between 08:00 and 22:00 in your timezone, and only when "
+        "something looks off."
+    ),
+    "checkins.set.off": "Anomaly check-ins disabled.",
+    "checkins.unknown": "Use /checkins, /checkins on, or /checkins off.",
+    # Templates for the actual probe messages.
+    "checkin.low_mood_streak": (
+        "Heads up — your mood has been low for {days} days in a row "
+        "({values}). Anything going on? If a thought is sticky, "
+        "/thought helps work through it; /activate is good if you'd "
+        "rather plan a small action."
+    ),
+    "checkin.sleep_crash": (
+        "Sleep has been short — {values} hours over the last {days} "
+        "nights. If something's keeping you up, /note it; /activate "
+        "can help break the cycle."
+    ),
+    "checkin.anxiety_spike": (
+        "Anxiety hit {value} today. /thought to work through what "
+        "triggered it, or /activate to ground yourself in a small "
+        "concrete action."
+    ),
     # HELP_TEXT — assembled from a single block to keep formatting.
     "help.text": (
         "CBT tracker bot — log your day, ask Claude to analyse it.\n"
@@ -178,7 +211,10 @@ EN: dict[str, str] = {
         "/dailyoff — disable the daily summary.\n"
         "/weeklyat sun 21:00 — enable a weekly Haiku summary on this "
         "day & time. Use for a Sunday-night week-in-review.\n"
-        "/weeklyoff — disable the weekly summary.\n\n"
+        "/weeklyoff — disable the weekly summary.\n"
+        "/checkins on|off — proactive nudges when mood, sleep or "
+        "anxiety look unusual. Enable if you want the bot to reach "
+        "out instead of waiting for your move.\n\n"
         "⚙️ Settings\n"
         "/tz <IANA> — set your timezone, e.g. /tz Europe/Berlin. "
         "Use once on first login; day boundaries depend on it.\n"
@@ -291,6 +327,37 @@ RU: dict[str, str] = {
     "sched.weeklyat.bad_time": "Неверное время «{raw}». Используй HH:MM.",
     "sched.weeklyat.set": "Еженедельная сводка включена в {dow} {time} ({tz}).",
     "sched.weeklyoff.set": "Еженедельная сводка выключена.",
+    "checkins.show.on": (
+        "Проверки на аномалии: ВКЛ. Я мягко напишу, если настроение, "
+        "сон или тревога выглядят необычно. Выключить: /checkins off."
+    ),
+    "checkins.show.off": (
+        "Проверки на аномалии: ВЫКЛ. Включить: /checkins on — "
+        "я напишу, если что-то выглядит необычно."
+    ),
+    "checkins.set.on": (
+        "Проверки на аномалии включены. Не чаще одного раза в сутки, "
+        "только с 08:00 до 22:00 в твоём часовом поясе, и только если "
+        "что-то выглядит необычно."
+    ),
+    "checkins.set.off": "Проверки на аномалии выключены.",
+    "checkins.unknown": "Используй /checkins, /checkins on или /checkins off.",
+    "checkin.low_mood_streak": (
+        "Замечу аккуратно — настроение низкое уже {days} дня подряд "
+        "({values}). Что-то происходит? Если мысль не отпускает, "
+        "/thought поможет её разобрать; /activate — если хочется "
+        "запланировать маленькое действие."
+    ),
+    "checkin.sleep_crash": (
+        "Сон был коротким — {values} часов за последние {days} ночи. "
+        "Если что-то мешает спать, /note это; /activate помогает "
+        "выйти из цикла."
+    ),
+    "checkin.anxiety_spike": (
+        "Сегодня тревога {value}. /thought поможет разобраться, что "
+        "её запустило, либо /activate — чтобы заземлиться через "
+        "маленькое конкретное действие."
+    ),
     "help.text": (
         "Бот для самоотслеживания (КПТ) — записывай день, попроси Клода проанализировать.\n"
         "После каждой команды — *когда* её удобно использовать.\n\n"
@@ -340,7 +407,10 @@ RU: dict[str, str] = {
         "/dailyoff — выключить ежедневную сводку.\n"
         "/weeklyat sun 21:00 — включить еженедельную сводку в этот "
         "день и время. Например, для воскресного обзора недели.\n"
-        "/weeklyoff — выключить еженедельную сводку.\n\n"
+        "/weeklyoff — выключить еженедельную сводку.\n"
+        "/checkins on|off — мягкие напоминания, когда настроение, сон "
+        "или тревога выглядят необычно. Включи, если хочешь, чтобы "
+        "бот сам обращался, а не ждал твоего хода.\n\n"
         "⚙️ Настройки\n"
         "/tz <IANA> — часовой пояс, например /tz Europe/Berlin. "
         "Один раз при первом входе; границы дня зависят от него.\n"

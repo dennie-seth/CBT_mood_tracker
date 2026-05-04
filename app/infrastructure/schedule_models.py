@@ -48,6 +48,16 @@ class SchedulePrefs(Base):
     weekly_at: Mapped[time | None] = mapped_column(Time, nullable=True)
     weekly_last_sent_date: Mapped[date | None] = mapped_column(Date, nullable=True)
 
+    # Proactive anomaly check-ins. Opt-in (default off) so an existing
+    # user is never surprised by an unsolicited message. `last_sent_at`
+    # is UTC; the 24h cooldown is enforced in the service layer.
+    checkins_enabled: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
+    checkins_last_sent_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
@@ -62,5 +72,10 @@ class SchedulePrefs(Base):
             "ix_schedule_prefs_weekly_enabled",
             "weekly_enabled",
             postgresql_where="weekly_enabled",
+        ),
+        Index(
+            "ix_schedule_prefs_checkins_enabled",
+            "checkins_enabled",
+            postgresql_where="checkins_enabled",
         ),
     )

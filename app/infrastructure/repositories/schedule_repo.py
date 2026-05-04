@@ -37,6 +37,7 @@ class SqlScheduleRepository:
             .where(
                 (SchedulePrefs.daily_enabled.is_(True))
                 | (SchedulePrefs.weekly_enabled.is_(True))
+                | (SchedulePrefs.checkins_enabled.is_(True))
             )
         )
         result = await self._session.execute(stmt)
@@ -115,6 +116,23 @@ class SqlScheduleRepository:
     async def stamp_weekly_sent(self, user_id: int, *, on: date) -> None:
         prefs = await self._get_or_create(user_id)
         prefs.weekly_last_sent_date = on
+        prefs.updated_at = datetime.now(tz=timezone.utc)
+
+    async def set_checkins(self, user_id: int, *, enabled: bool) -> SchedulePrefs:
+        """Enable or disable proactive anomaly check-ins."""
+        prefs = await self._get_or_create(user_id)
+        prefs.checkins_enabled = enabled
+        if not enabled:
+            # Reset cooldown so re-enabling later doesn't suppress next probe.
+            prefs.checkins_last_sent_at = None
+        prefs.updated_at = datetime.now(tz=timezone.utc)
+        return prefs
+
+    async def stamp_checkin_sent(
+        self, user_id: int, *, at: datetime
+    ) -> None:
+        prefs = await self._get_or_create(user_id)
+        prefs.checkins_last_sent_at = at
         prefs.updated_at = datetime.now(tz=timezone.utc)
 
     async def _get_or_create(self, user_id: int) -> SchedulePrefs:
