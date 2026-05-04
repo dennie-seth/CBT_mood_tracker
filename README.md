@@ -28,7 +28,7 @@ Edit `.env`:
 - `ALLOWED_TELEGRAM_IDS` — your Telegram numeric ID (find via [@userinfobot](https://t.me/userinfobot)). CSV for multiple users.
 - `FERNET_KEYS` — the key you generated. CSV supports rotation (first key encrypts; all keys decrypt).
 - `POSTGRES_PASSWORD` — pick something
-- `DB_URL` — must match the postgres credentials above
+  *(`DB_URL` is computed from these — don't set it manually)*
 
 Then:
 

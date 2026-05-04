@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from functools import lru_cache
 from typing import Annotated
+from urllib.parse import quote
 
-from pydantic import Field, field_validator
+from pydantic import Field, computed_field, field_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
@@ -29,10 +30,30 @@ class Settings(BaseSettings):
 
     fernet_keys: Annotated[tuple[str, ...], NoDecode] = Field(alias="FERNET_KEYS")
 
-    db_url: str = Field(alias="DB_URL")
+    # Single source of truth for the Postgres credentials. `db_url` is composed
+    # from these (see `db_url` below), which keeps the password edited in
+    # exactly one place — `POSTGRES_PASSWORD`. The Postgres image reads the
+    # same env vars at initdb time, so cluster and client always agree.
+    postgres_user: str = Field(alias="POSTGRES_USER")
+    postgres_password: str = Field(alias="POSTGRES_PASSWORD")
+    postgres_db: str = Field(alias="POSTGRES_DB")
+    postgres_host: str = Field(default="postgres", alias="POSTGRES_HOST")
+    postgres_port: int = Field(default=5432, alias="POSTGRES_PORT")
 
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
     default_timezone: str = Field(default="UTC", alias="DEFAULT_TIMEZONE")
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def db_url(self) -> str:
+        """asyncpg URL with user/password URL-encoded so passwords containing
+        `&`, `@`, `:`, etc. don't break parsing."""
+        user = quote(self.postgres_user, safe="")
+        password = quote(self.postgres_password, safe="")
+        return (
+            f"postgresql+asyncpg://{user}:{password}"
+            f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
+        )
 
     @field_validator("allowed_telegram_ids", mode="before")
     @classmethod
