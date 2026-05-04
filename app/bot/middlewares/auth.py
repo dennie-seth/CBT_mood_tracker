@@ -5,7 +5,7 @@ from typing import Any
 
 import structlog
 from aiogram import BaseMiddleware
-from aiogram.types import CallbackQuery, Message, TelegramObject, User as TgUser
+from aiogram.types import CallbackQuery, Chat, Message, TelegramObject, User as TgUser
 
 log = structlog.get_logger(__name__)
 
@@ -48,7 +48,7 @@ class AllowlistMiddleware(BaseMiddleware):
             await self._refuse(event, _PRIVATE_REFUSAL)
             return
 
-        if not _is_private_chat(event):
+        if not _is_private_chat(event, data):
             log.warning(
                 "rejected_non_private_chat",
                 telegram_id=tg_user.id,
@@ -70,15 +70,26 @@ class AllowlistMiddleware(BaseMiddleware):
             pass
 
 
-def _is_private_chat(event: TelegramObject) -> bool:
-    """True iff the event originated from a 1:1 private chat with the bot."""
-    chat = None
-    if isinstance(event, Message):
-        chat = event.chat
-    elif isinstance(event, CallbackQuery) and event.message is not None:
-        chat = event.message.chat
+def _is_private_chat(event: TelegramObject, data: dict[str, Any]) -> bool:
+    """True iff the event originated from a 1:1 private chat with the bot.
+
+    `dp.update.outer_middleware(...)` runs at the Update wrapper level, so
+    `event` is `Update`, not `Message`/`CallbackQuery`. aiogram's internal
+    user-context middleware already digs out the chat for us and stores it
+    under `data['event_chat']` — we use that as the canonical source.
+
+    Falls back to inspecting `event` directly only as a defensive secondary
+    path so the helper still works when called with a Message/CallbackQuery
+    in tests or in per-event observers.
+    """
+    chat: Chat | None = data.get("event_chat")
     if chat is None:
-        # No chat attached (e.g. inline_query, business_message). Refuse — those
-        # paths aren't part of this bot's surface today.
+        if isinstance(event, Message):
+            chat = event.chat
+        elif isinstance(event, CallbackQuery) and event.message is not None:
+            chat = event.message.chat
+    if chat is None:
+        # No chat attached (e.g. inline_query, business_message). Fail closed
+        # — those paths aren't part of this bot's surface today.
         return False
     return getattr(chat, "type", None) == "private"
