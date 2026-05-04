@@ -37,6 +37,18 @@ class SqlEntryRepository:
         result = await self._session.execute(stmt)
         return list(result.scalars().all())
 
+    async def get_for_user(self, entry_id: int, user_id: int) -> Entry | None:
+        return await self._session.scalar(
+            select(Entry).where(Entry.id == entry_id, Entry.user_id == user_id)
+        )
+
+    async def exists(self, entry_id: int) -> bool:
+        return (
+            await self._session.scalar(
+                select(Entry.id).where(Entry.id == entry_id)
+            )
+        ) is not None
+
     async def daily_aggregates(
         self,
         user_id: int,
