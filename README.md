@@ -150,3 +150,7 @@ Tests run with fake repositories — no Postgres or Anthropic API calls required
 - Reminders / scheduled nudges (could be added with APScheduler)
 - HIPAA/GDPR formal compliance — this is a personal tool
 - Voice / photo entry parsing
+
+## License
+
+MIT — see [LICENSE](LICENSE).

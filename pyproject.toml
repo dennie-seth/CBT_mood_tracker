@@ -3,6 +3,8 @@ name = "mood-tracker"
 version = "0.1.0"
 description = "Telegram bot for CBT therapy self-tracking with Claude Haiku analytics"
 requires-python = ">=3.12"
+license = "MIT"
+license-files = ["LICENSE"]
 dependencies = [
     "aiogram>=3.4,<4",
     "sqlalchemy[asyncio]>=2.0,<3",
