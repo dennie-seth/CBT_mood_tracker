@@ -1,0 +1,31 @@
+.env
+.env.*
+!.env.example
+
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# matplotlib output during local debugging
+*.png
+*.pdf
+!docs/**/*.png
+!docs/**/*.pdf
+
+# IDE
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Claude Code per-machine settings
+.claude/settings.local.json
+
+# Postgres data dirs (if ever bind-mounted by accident)
+pgdata/
