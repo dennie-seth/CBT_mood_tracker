@@ -75,6 +75,7 @@ docker compose up --build
 - **Allowlist is the outermost middleware**. Don't add handlers that bypass it. Don't put auth checks inside handlers.
 - **Logs never contain message text or entry payloads** — only `metric_type`, ids, and counts. `structlog` is configured in `app/logging_setup.py`; use it (`structlog.get_logger(__name__)`) rather than the stdlib logger.
 - **`User.timezone` defines day boundaries**. When computing `entry_date`, always go through `EntryService.create` (which converts UTC → user tz → date) or `app/services/time.py` helpers. Don't use `datetime.now().date()`.
+- **FSM state is persistent**: aiogram's storage is `PgFsmStorage` ([app/infrastructure/fsm_storage.py](app/infrastructure/fsm_storage.py)), backed by the `fsm_state` Postgres table. The `data` blob is encrypted with the same `FernetCipher` as entries — so handlers can put free-text into `state.update_data(...)` mid-flow without leaking plaintext to the DB. Stale rows (>7 days) are pruned opportunistically on each write; no scheduler.
 - **Layered, KISS**: don't introduce abstractions until two concrete needs exist. The `repositories.py` Protocols exist because both production code (Postgres) and tests (fakes) implement them — that's the bar.
 
 ### Adding a new metric

@@ -4,14 +4,6 @@ import asyncio
 
 import structlog
 from aiogram import Bot, Dispatcher
-from aiogram.fsm.storage.memory import MemoryStorage
-
-
-def make_bot(token: str) -> Bot:
-    # No default parse_mode: handlers send plain text. Setting HTML/Markdown
-    # globally would break messages that contain literal angle brackets
-    # (e.g. "<text>" placeholders in HELP_TEXT) or markdown-special chars.
-    return Bot(token=token)
 
 from app.bot.handlers import register_all
 from app.bot.middlewares.auth import AllowlistMiddleware
@@ -23,6 +15,13 @@ from app.di import build_container
 from app.logging_setup import configure_logging
 
 
+def make_bot(token: str) -> Bot:
+    # No default parse_mode: handlers send plain text. Setting HTML/Markdown
+    # globally would break messages that contain literal angle brackets
+    # (e.g. "<text>" placeholders in HELP_TEXT) or markdown-special chars.
+    return Bot(token=token)
+
+
 async def main() -> None:
     settings = get_settings()
     configure_logging(settings.log_level)
@@ -31,7 +30,7 @@ async def main() -> None:
     container = build_container(settings)
 
     bot = make_bot(settings.bot_token)
-    dp = Dispatcher(storage=MemoryStorage())
+    dp = Dispatcher(storage=container.fsm_storage)
 
     # Order matters: outermost first.
     dp.update.outer_middleware(AllowlistMiddleware(settings.allowed_telegram_ids))

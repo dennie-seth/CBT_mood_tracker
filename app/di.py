@@ -9,6 +9,7 @@ from app.config import Settings
 from app.infrastructure.ai_client import make_anthropic_client
 from app.infrastructure.crypto import FernetCipher
 from app.infrastructure.db import make_engine, make_sessionmaker
+from app.infrastructure.fsm_storage import PgFsmStorage
 from app.services.ai_service import AiService
 from app.services.analysis_service import AnalysisService
 from app.services.chart_service import ChartService
@@ -29,8 +30,10 @@ class Container:
     analysis_service_factory: type[AnalysisService]  # built per-request with a repo
     chart_service: ChartService
     pdf_service: PdfService
+    fsm_storage: PgFsmStorage
 
     async def aclose(self) -> None:
+        await self.fsm_storage.close()
         await self.engine.dispose()
 
 
@@ -44,6 +47,7 @@ def build_container(settings: Settings) -> Container:
         model=settings.anthropic_model,
         max_iterations=settings.ai_max_tool_iterations,
     )
+    fsm_storage = PgFsmStorage(sm, cipher)
     return Container(
         settings=settings,
         engine=engine,
@@ -54,4 +58,5 @@ def build_container(settings: Settings) -> Container:
         analysis_service_factory=AnalysisService,
         chart_service=ChartService(),
         pdf_service=PdfService(),
+        fsm_storage=fsm_storage,
     )
