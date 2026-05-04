@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import re
 from collections.abc import Awaitable, Callable
-from datetime import date, datetime, time, timezone
+from datetime import UTC, date, datetime, time
 from typing import Literal
 
 import pytz
@@ -18,6 +18,7 @@ log = structlog.get_logger(__name__)
 
 SummaryKind = Literal["daily", "weekly"]
 DeliveryFn = Callable[..., Awaitable[None]]
+CheckinProbeFn = Callable[..., Awaitable[None]]
 
 _TIME_RE = re.compile(r"^([01]?\d|2[0-3]):([0-5]?\d)$")
 _WEEKDAY_TO_ISO: dict[str, int] = {
@@ -112,9 +113,11 @@ class SummaryScheduler:
         sessionmaker: async_sessionmaker[AsyncSession],
         delivery: DeliveryFn,
         allowed_telegram_ids: frozenset[int] | None = None,
+        checkin_probe: CheckinProbeFn | None = None,
     ) -> None:
         self._sm = sessionmaker
         self._delivery = delivery
+        self._checkin_probe = checkin_probe
         # `None` means "no allowlist enforcement here" — used in older tests and
         # equivalent to allowing all loaded users. Production passes the same
         # frozenset that the auth middleware uses.
@@ -153,6 +156,8 @@ class SummaryScheduler:
                 coros.append(
                     self._safe_deliver(user=user, kind="weekly", local_today=local.date())
                 )
+            if self._checkin_probe is not None and prefs.checkins_enabled:
+                coros.append(self._safe_probe(user=user, now_utc=now_utc))
 
         if coros:
             await asyncio.gather(*coros, return_exceptions=False)
@@ -169,13 +174,24 @@ class SummaryScheduler:
                     error=str(exc),
                 )
 
+    async def _safe_probe(self, *, user: User, now_utc: datetime) -> None:
+        async with self._semaphore:
+            try:
+                await self._checkin_probe(user=user, now_utc=now_utc)  # type: ignore[misc]
+            except Exception as exc:
+                log.warning(
+                    "checkin_probe_failed",
+                    user_id=user.id,
+                    error=str(exc),
+                )
+
     async def run(self) -> None:
         """Long-running tick loop. Cancel the task to stop."""
         log.info("summary_scheduler_started", interval=self.TICK_INTERVAL_SECONDS)
         try:
             while True:
                 try:
-                    await self.dispatch_due(datetime.now(tz=timezone.utc))
+                    await self.dispatch_due(datetime.now(tz=UTC))
                 except Exception as exc:
                     # A tick failure (e.g. transient DB error) must not kill the loop.
                     log.warning("summary_tick_failed", error=str(exc))

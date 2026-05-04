@@ -65,6 +65,7 @@ The bot's `/help` lists every command with a *use-case* sentence — when to rea
 | `/dailyoff` | Disable daily summary |
 | `/weeklyat sun 21:00` | Enable a weekly Haiku summary on this day & time |
 | `/weeklyoff` | Disable weekly summary |
+| `/checkins on\|off` | Proactive nudges when mood / sleep / anxiety look unusual (heuristic, opt-in, ≤ 1/day, 08:00–22:00 in your tz) |
 | `/tz <IANA>` | Once on first login (e.g. `/tz Europe/Berlin`) — day boundaries depend on it |
 | `/lang <en\|ru>` | Switch the bot's interface language (auto-detected from Telegram on first `/start`) |
 | `/cancel` | Abort the current guided step |
@@ -143,6 +144,10 @@ The bot ships English and Russian UI strings. On first `/start`, language is aut
 Each user can opt in to a daily or weekly Haiku-generated summary. Settings live in `schedule_prefs` (Postgres) and are interpreted in the user's timezone. A once-per-minute in-process tick (`SummaryScheduler`, started from `app/main.py`) scans enabled rows and invokes `SummaryService.send` for whoever's due, idempotently — `*_last_sent_date` prevents double delivery across restarts.
 
 The empty-day case still delivers: the daily prompt asks Haiku to send a brief warm acknowledgement plus a single low-effort reflection question. Haiku replies in the user's language inferred from recent entries.
+
+## Proactive anomaly check-ins
+
+Opt-in (`/checkins on`) — the same scheduler tick also calls `AnomalyCheckinService.maybe_probe`. Heuristic detector ([app/services/anomaly_detector.py](app/services/anomaly_detector.py)) flags three patterns: mood ≤ 4 for 3 days in a row, sleep ≤ 5 hours for 2 nights, or anxiety ≥ 8 today. Gating (in order, all must pass): enabled, 08:00–22:00 in user tz, no probe in last 24 h, daily summary not already fired today, detector returns at least one anomaly. Templated EN/RU message with the concrete numbers — no Anthropic call per probe, so it costs nothing.
 
 ## Running tests
 

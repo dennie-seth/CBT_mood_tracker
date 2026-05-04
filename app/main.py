@@ -12,7 +12,12 @@ from app.bot.middlewares.db import DbSessionMiddleware
 from app.bot.middlewares.user_ctx import UserContextMiddleware
 from app.config import get_settings
 from app.di import build_container
+from app.infrastructure.repositories.entry_repo import SqlEntryRepository
+from app.infrastructure.repositories.schedule_repo import SqlScheduleRepository
 from app.logging_setup import configure_logging
+from app.services.analysis_service import AnalysisService
+from app.services.anomaly_checkin_service import AnomalyCheckinService
+from app.services.anomaly_detector import AnomalyDetector
 from app.services.schedule_service import SummaryScheduler
 from app.services.summary_service import SummaryService
 
@@ -42,10 +47,18 @@ async def main() -> None:
         pdf_service=container.pdf_service,
         bot=bot,
     )
+    checkin_service = AnomalyCheckinService(
+        sessionmaker=container.sessionmaker,
+        schedule_repo_factory=SqlScheduleRepository,
+        analysis_factory=lambda s: AnalysisService(SqlEntryRepository(s)),
+        detector=AnomalyDetector(),
+        bot=bot,
+    )
     scheduler = SummaryScheduler(
         sessionmaker=container.sessionmaker,
         delivery=summary_service.send,
         allowed_telegram_ids=settings.allowed_telegram_ids,
+        checkin_probe=checkin_service.maybe_probe,
     )
 
     # Order matters: outermost first.
