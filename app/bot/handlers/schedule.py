@@ -5,6 +5,7 @@ from aiogram.filters import Command, CommandObject
 from aiogram.types import Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.bot.i18n import t
 from app.domain.models import User
 from app.infrastructure.repositories.schedule_repo import SqlScheduleRepository
 from app.services.schedule_service import (
@@ -24,26 +25,28 @@ async def cmd_schedule(
     session: AsyncSession,
 ) -> None:
     prefs = await SqlScheduleRepository(session).get(user.id)
-    daily = "off"
-    weekly = "off"
+    daily = t(user.language, "sched.daily.off")
+    weekly = t(user.language, "sched.weekly.off")
     if prefs:
         if prefs.daily_enabled and prefs.daily_at is not None:
-            daily = f"on at {prefs.daily_at.strftime('%H:%M')}"
+            daily = t(
+                user.language, "sched.daily.on",
+                time=prefs.daily_at.strftime("%H:%M"),
+                tz=user.timezone,
+            )
         if (
             prefs.weekly_enabled
             and prefs.weekly_at is not None
             and prefs.weekly_weekday is not None
         ):
-            weekly = (
-                f"on {format_weekday(prefs.weekly_weekday)} "
-                f"at {prefs.weekly_at.strftime('%H:%M')}"
+            weekly = t(
+                user.language, "sched.weekly.on",
+                dow=format_weekday(prefs.weekly_weekday),
+                time=prefs.weekly_at.strftime("%H:%M"),
+                tz=user.timezone,
             )
     await message.answer(
-        "Auto summaries:\n"
-        f"• Daily: {daily}\n"
-        f"• Weekly: {weekly}\n"
-        f"\nTimes are interpreted in your timezone ({user.timezone}).\n"
-        "Change with /dailyat HH:MM, /weeklyat <day> HH:MM, /dailyoff, /weeklyoff."
+        t(user.language, "sched.show", daily=daily, weekly=weekly)
     )
 
 
@@ -55,22 +58,24 @@ async def cmd_dailyat(
     session: AsyncSession,
 ) -> None:
     if not command.args:
-        await message.answer(
-            "Usage: /dailyat 21:00\n"
-            "Sets the time (your timezone) for the daily summary."
-        )
+        await message.answer(t(user.language, "sched.dailyat.usage"))
         return
     try:
         at = parse_time(command.args.strip())
-    except ValueError as e:
-        await message.answer(f"Could not parse time: {e}")
+    except ValueError:
+        await message.answer(
+            t(user.language, "sched.dailyat.bad_time", raw=command.args.strip())
+        )
         return
     repo = SqlScheduleRepository(session)
     await repo.set_daily(
         user.id, enabled=True, at=at, now_local=now_in_tz(user.timezone)
     )
     await message.answer(
-        f"Daily summary enabled at {at.strftime('%H:%M')} ({user.timezone})."
+        t(
+            user.language, "sched.dailyat.set",
+            time=at.strftime("%H:%M"), tz=user.timezone,
+        )
     )
 
 
@@ -82,7 +87,7 @@ async def cmd_dailyoff(
 ) -> None:
     repo = SqlScheduleRepository(session)
     await repo.set_daily(user.id, enabled=False)
-    await message.answer("Daily summary disabled.")
+    await message.answer(t(user.language, "sched.dailyoff.set"))
 
 
 @router.message(Command("weeklyat"))
@@ -93,16 +98,19 @@ async def cmd_weeklyat(
     session: AsyncSession,
 ) -> None:
     if not command.args:
-        await message.answer(
-            "Usage: /weeklyat sun 21:00\n"
-            "Sets the day & time (your timezone) for the weekly summary.\n"
-            "Days: mon, tue, wed, thu, fri, sat, sun."
-        )
+        await message.answer(t(user.language, "sched.weeklyat.usage"))
         return
     try:
         weekday, at = parse_weekly_args(command.args)
     except ValueError as e:
-        await message.answer(f"Could not parse: {e}")
+        msg = str(e)
+        # Pick a more specific key when we recognise the failure shape.
+        key = (
+            "sched.weeklyat.bad_dow"
+            if "weekday" in msg or "day" in msg
+            else "sched.weeklyat.bad_time"
+        )
+        await message.answer(t(user.language, key, raw=command.args.strip()))
         return
     repo = SqlScheduleRepository(session)
     await repo.set_weekly(
@@ -113,8 +121,12 @@ async def cmd_weeklyat(
         now_local=now_in_tz(user.timezone),
     )
     await message.answer(
-        f"Weekly summary enabled on {format_weekday(weekday)} "
-        f"at {at.strftime('%H:%M')} ({user.timezone})."
+        t(
+            user.language, "sched.weeklyat.set",
+            dow=format_weekday(weekday),
+            time=at.strftime("%H:%M"),
+            tz=user.timezone,
+        )
     )
 
 
@@ -126,4 +138,4 @@ async def cmd_weeklyoff(
 ) -> None:
     repo = SqlScheduleRepository(session)
     await repo.set_weekly(user.id, enabled=False)
-    await message.answer("Weekly summary disabled.")
+    await message.answer(t(user.language, "sched.weeklyoff.set"))

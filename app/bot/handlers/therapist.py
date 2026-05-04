@@ -5,6 +5,7 @@ from aiogram.filters import Command, CommandObject
 from aiogram.types import BufferedInputFile, CallbackQuery, Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.bot.i18n import t
 from app.bot.keyboards import period_picker
 from app.di import Container
 from app.domain.models import User
@@ -41,10 +42,9 @@ async def _send_pdf(
     )
     await bot.send_document(
         chat_id, file,
-        caption=(
-            f"Therapist report {start.isoformat()} → {end.isoformat()}.\n"
-            "Includes thought records, BA outcomes and notes — share with your "
-            "clinician only."
+        caption=t(
+            user.language, "therapist.caption",
+            start=start.isoformat(), end=end.isoformat(),
         ),
     )
 
@@ -59,7 +59,7 @@ async def cmd_therapist(
 ) -> None:
     if not command.args:
         await message.answer(
-            "Pick a period for the therapist report:",
+            t(user.language, "therapist.pick_period"),
             reply_markup=period_picker("therapist"),
         )
         return

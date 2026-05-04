@@ -72,7 +72,10 @@ class SummaryService:
 
             prompt = DAILY_PROMPT if kind == "daily" else WEEKLY_PROMPT
             answer = await self._ai.answer(
-                question=prompt, dispatcher=dispatcher, today=local_today
+                question=prompt,
+                dispatcher=dispatcher,
+                today=local_today,
+                target_language=user.language,
             )
 
             schedule_repo = SqlScheduleRepository(session)

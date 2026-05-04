@@ -9,6 +9,7 @@ from app.bot.handlers import (
     chart,
     export,
     journal,
+    lang,
     log,
     quick,
     schedule,
@@ -28,6 +29,7 @@ def register_all(dp: Dispatcher) -> None:
     dp.include_router(activate.router)
     dp.include_router(today.router)
     dp.include_router(tz.router)
+    dp.include_router(lang.router)
     dp.include_router(schedule.router)
     dp.include_router(ask.router)
     dp.include_router(chart.router)

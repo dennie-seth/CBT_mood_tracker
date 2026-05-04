@@ -7,6 +7,7 @@ from aiogram.types import Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.bot.deps import entry_service
+from app.bot.i18n import t
 from app.bot.states import JournalFlow, ThoughtFlow
 from app.domain.enums import MetricType
 from app.domain.models import User
@@ -27,10 +28,12 @@ async def cmd_note(
     if command.args:
         svc = entry_service(session, cipher)
         dto = await svc.create(user, MetricType.NOTE, value_text=command.args.strip())
-        await message.answer(f"Note saved for {dto.entry_date.isoformat()}.")
+        await message.answer(
+            t(user.language, "note.saved", date=dto.entry_date.isoformat())
+        )
         return
     await state.set_state(JournalFlow.enter_text)
-    await message.answer("Send your note as the next message.")
+    await message.answer(t(user.language, "note.send"))
 
 
 @router.message(JournalFlow.enter_text)
@@ -42,51 +45,47 @@ async def journal_text(
     cipher: FernetCipher,
 ) -> None:
     if not message.text:
-        await message.answer("Please send text.")
+        await message.answer(t(user.language, "err.send_text"))
         return
     svc = entry_service(session, cipher)
     dto = await svc.create(user, MetricType.NOTE, value_text=message.text.strip())
     await state.clear()
-    await message.answer(f"Note saved for {dto.entry_date.isoformat()}.")
-
-
-@router.message(Command("thought"))
-async def cmd_thought(message: Message, state: FSMContext) -> None:
-    await state.set_state(ThoughtFlow.situation)
     await message.answer(
-        "CBT thought record. First, describe the situation:"
+        t(user.language, "note.saved", date=dto.entry_date.isoformat())
     )
 
 
+@router.message(Command("thought"))
+async def cmd_thought(message: Message, state: FSMContext, user: User) -> None:
+    await state.set_state(ThoughtFlow.situation)
+    await message.answer(t(user.language, "thought.start"))
+
+
 @router.message(ThoughtFlow.situation)
-async def thought_situation(message: Message, state: FSMContext) -> None:
+async def thought_situation(message: Message, state: FSMContext, user: User) -> None:
     if not message.text:
         return
     await state.update_data(situation_text=message.text.strip())
     await state.set_state(ThoughtFlow.automatic_thought)
-    await message.answer("What automatic thought came up?")
+    await message.answer(t(user.language, "thought.ask_auto"))
 
 
 @router.message(ThoughtFlow.automatic_thought)
-async def thought_auto(message: Message, state: FSMContext) -> None:
+async def thought_auto(message: Message, state: FSMContext, user: User) -> None:
     if not message.text:
         return
     await state.update_data(automatic_thought_text=message.text.strip())
     await state.set_state(ThoughtFlow.distortion)
-    await message.answer(
-        "Which cognitive distortion fits best?\n"
-        "(catastrophising / all-or-nothing / mind-reading / personalisation / "
-        "overgeneralisation / labelling / 'should' statements / fortune-telling / other)"
-    )
+    await message.answer(t(user.language, "thought.ask_distortion"))
 
 
 @router.message(ThoughtFlow.distortion)
-async def thought_distortion(message: Message, state: FSMContext) -> None:
+async def thought_distortion(message: Message, state: FSMContext, user: User) -> None:
     if not message.text:
         return
     await state.update_data(distortion_text=message.text.strip())
     await state.set_state(ThoughtFlow.reframe)
-    await message.answer("Now reframe it. What's a more balanced thought?")
+    await message.answer(t(user.language, "thought.ask_reframe"))
 
 
 @router.message(ThoughtFlow.reframe)
@@ -110,5 +109,5 @@ async def thought_reframe(
     dto = await svc.create(user, MetricType.THOUGHT_RECORD, extra=extra)
     await state.clear()
     await message.answer(
-        f"Thought record saved for {dto.entry_date.isoformat()}. Nice work."
+        t(user.language, "thought.saved", date=dto.entry_date.isoformat())
     )

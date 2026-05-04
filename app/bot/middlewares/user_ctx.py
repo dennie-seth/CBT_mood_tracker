@@ -5,7 +5,8 @@ from typing import Any
 
 import structlog
 from aiogram import BaseMiddleware
-from aiogram.types import TelegramObject, User as TgUser
+from aiogram.types import TelegramObject
+from aiogram.types import User as TgUser
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import Settings
@@ -39,8 +40,17 @@ class UserContextMiddleware(BaseMiddleware):
         user = await repo.get_by_telegram_id(tg_user.id)
         if user is None:
             display = (tg_user.full_name or tg_user.username or str(tg_user.id))[:120]
-            user = await repo.create(tg_user.id, display, self._default_tz)
-            log.info("user_registered", telegram_id=tg_user.id, user_id=user.id)
+            from app.bot.i18n import detect_language
+            lang = detect_language(getattr(tg_user, "language_code", None))
+            user = await repo.create(
+                tg_user.id, display, self._default_tz, language=lang
+            )
+            log.info(
+                "user_registered",
+                telegram_id=tg_user.id,
+                user_id=user.id,
+                language=lang,
+            )
 
         data["user"] = user
         return await handler(event, data)

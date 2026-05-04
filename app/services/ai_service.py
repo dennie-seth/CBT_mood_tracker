@@ -41,9 +41,13 @@ class AiService:
         question: str,
         dispatcher: ToolDispatcher,
         today: date,
+        *,
+        target_language: str = "en",
     ) -> AiAnswer:
+        lang_full = "Russian" if target_language == "ru" else "English"
         user_message = (
             f"Today is {today.isoformat()} ({dispatcher.user_timezone}).\n"
+            f"Reply in {lang_full}.\n"
             f"User question: {question}"
         )
         messages: list[dict] = [{"role": "user", "content": user_message}]

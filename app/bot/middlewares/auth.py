@@ -5,7 +5,8 @@ from typing import Any
 
 import structlog
 from aiogram import BaseMiddleware
-from aiogram.types import CallbackQuery, Chat, Message, TelegramObject, User as TgUser
+from aiogram.types import CallbackQuery, Chat, Message, TelegramObject
+from aiogram.types import User as TgUser
 
 log = structlog.get_logger(__name__)
 

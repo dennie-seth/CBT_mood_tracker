@@ -75,6 +75,7 @@ docker compose up --build
 - **Allowlist is the outermost middleware**. Don't add handlers that bypass it. Don't put auth checks inside handlers.
 - **Logs never contain message text or entry payloads** — only `metric_type`, ids, and counts. `structlog` is configured in `app/logging_setup.py`; use it (`structlog.get_logger(__name__)`) rather than the stdlib logger.
 - **`User.timezone` defines day boundaries**. When computing `entry_date`, always go through `EntryService.create` (which converts UTC → user tz → date) or `app/services/time.py` helpers. Don't use `datetime.now().date()`.
+- **i18n is dotted-key string-table, not gettext**. User-facing strings live in [app/bot/i18n.py](app/bot/i18n.py): `EN` is authoritative, `RU` is an overlay, missing keys fall back to EN then to the key itself (loud signal). Handlers call `t(user.language, "some.key", **fmt)`. `metric_label(metric, lang)` localizes `MetricType` labels — keep `app/domain/enums.py:METRIC_LABELS` English so the domain stays language-agnostic. Chart axes and PDF page titles stay English on purpose (short data labels; matplotlib font handling across scripts is fragile). AI replies in the user's language because `AiService.answer(target_language=...)` injects an explicit "Reply in X." directive — don't go back to "infer from recent entries".
 - **FSM state is persistent**: aiogram's storage is `PgFsmStorage` ([app/infrastructure/fsm_storage.py](app/infrastructure/fsm_storage.py)), backed by the `fsm_state` Postgres table. The `data` blob is encrypted with the same `FernetCipher` as entries — so handlers can put free-text into `state.update_data(...)` mid-flow without leaking plaintext to the DB. Stale rows (>7 days) are pruned opportunistically on each write; no scheduler.
 - **Proactive Haiku summaries**: `SummaryScheduler` ([app/services/schedule_service.py](app/services/schedule_service.py)) runs in-process via `asyncio.create_task` from `main.py`, ticks every 60 s, scans `schedule_prefs`, and invokes `SummaryService.send` for due users. Idempotency comes from `daily_last_sent_date` / `weekly_last_sent_date` (interpreted in the user's tz). `>=` semantics means a missed tick still delivers later the same day. Tools exposed to Haiku stay the same — see `app/ai/summary_prompts.py` for the daily/weekly framing prompts.
 - **Layered, KISS**: don't introduce abstractions until two concrete needs exist. The `repositories.py` Protocols exist because both production code (Postgres) and tests (fakes) implement them — that's the bar.
@@ -82,7 +83,7 @@ docker compose up --build
 ### Adding a new metric
 
 1. Add the value to `MetricType` in `app/domain/enums.py` and to `NUMERIC_METRICS` or `TEXT_METRICS`.
-2. Add a label to `METRIC_LABELS`.
+2. Add a label to `METRIC_LABELS` (English) and to `_METRIC_LABELS_RU` in `app/bot/i18n.py` (Russian).
 3. If it's a numeric metric, optionally add a quick command in `app/bot/handlers/quick.py` (`QUICK_COMMANDS` dict).
 4. Write a test that the entry round-trips through `EntryService` and shows up in `daily_summary` (numeric) or in `list_range` decrypted (text).
 5. **No migration needed** — `metric_type` is a free-form `String(32)` column.
@@ -92,7 +93,8 @@ docker compose up --build
 1. Write a test in `tests/unit/` that exercises the relevant service (handlers themselves are thin; the logic lives in services).
 2. Create or extend a router in `app/bot/handlers/`.
 3. Register it in `app/bot/handlers/__init__.py:register_all`.
-4. Update the help text in `app/bot/handlers/start.py:HELP_TEXT` and the table in `README.md`.
+4. Add new user-facing strings to **both** `EN` and `RU` in [app/bot/i18n.py](app/bot/i18n.py); call them via `t(user.language, "key", ...)`. The `test_i18n.py::test_ru_has_no_orphan_keys` regression catches RU-only keys, but misses EN keys you forgot to translate — eyeball the diff.
+5. Update the help body (the `help.text` entry in `i18n.py`, in **both** EN and RU) and the table in `README.md`.
 
 ### Adding a new AI tool
 

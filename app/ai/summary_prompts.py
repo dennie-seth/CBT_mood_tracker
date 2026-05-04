@@ -19,8 +19,7 @@ DAILY_PROMPT = (
     "extra.planned_for <= today (user's tz), mention them in ONE sentence "
     "(e.g. 'You have N pending plan(s) for today: …'). Don't lecture, don't "
     "repeat if there are none. "
-    "Reply in the user's language as inferred from recent entries; default to English. "
-    "Keep it under ~140 words."
+"Keep it under ~140 words."
 )
 
 
@@ -32,6 +31,5 @@ WEEKLY_PROMPT = (
     "(3) Suggest a single, concrete focus area for next week. "
     "(4) Optionally call `generate_chart` once with mood + energy + anxiety so "
     "the user sees the picture. "
-    "Reply in the user's language as inferred from recent entries; default to English. "
-    "Keep it under ~150 words."
+"Keep it under ~150 words."
 )
