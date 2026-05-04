@@ -86,7 +86,7 @@ app/
   infrastructure/
     db.py           # async engine + sessionmaker
     crypto.py       # FernetCipher (multi-key rotation)
-    repositories/   # SqlUserRepository, SqlEntryRepository, SqlAuditRepository
+    repositories/   # SqlUserRepository, SqlEntryRepository, SqlScheduleRepository
     ai_client.py    # AsyncAnthropic factory
   services/
     entry_service.py   # encrypt-on-write, decrypt-on-read

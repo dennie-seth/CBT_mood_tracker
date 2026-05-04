@@ -105,14 +105,21 @@ class SummaryScheduler:
     """
 
     TICK_INTERVAL_SECONDS = 60
+    MAX_CONCURRENT_DELIVERIES = 8
 
     def __init__(
         self,
         sessionmaker: async_sessionmaker[AsyncSession],
         delivery: DeliveryFn,
+        allowed_telegram_ids: frozenset[int] | None = None,
     ) -> None:
         self._sm = sessionmaker
         self._delivery = delivery
+        # `None` means "no allowlist enforcement here" — used in older tests and
+        # equivalent to allowing all loaded users. Production passes the same
+        # frozenset that the auth middleware uses.
+        self._allowed_ids = allowed_telegram_ids
+        self._semaphore = asyncio.Semaphore(self.MAX_CONCURRENT_DELIVERIES)
         self._task: asyncio.Task[None] | None = None
 
     async def dispatch_due(self, now_utc: datetime) -> None:
@@ -124,6 +131,19 @@ class SummaryScheduler:
 
         coros: list[Awaitable[None]] = []
         for prefs, user in rows:
+            # Re-check the allowlist on every tick. The scheduler runs OUTSIDE
+            # aiogram middleware, so removing a user from ALLOWED_TELEGRAM_IDS
+            # would otherwise leave proactive Haiku summaries flowing.
+            if (
+                self._allowed_ids is not None
+                and user.telegram_id not in self._allowed_ids
+            ):
+                log.warning(
+                    "scheduler_skipping_revoked_user",
+                    telegram_id=user.telegram_id,
+                    user_id=user.id,
+                )
+                continue
             local = now_utc.astimezone(pytz.timezone(user.timezone))
             if is_daily_due(prefs, local):
                 coros.append(
@@ -138,15 +158,16 @@ class SummaryScheduler:
             await asyncio.gather(*coros, return_exceptions=False)
 
     async def _safe_deliver(self, *, user: User, kind: SummaryKind, local_today: date) -> None:
-        try:
-            await self._delivery(user=user, kind=kind, local_today=local_today)
-        except Exception as exc:
-            log.warning(
-                "summary_delivery_failed",
-                user_id=user.id,
-                kind=kind,
-                error=str(exc),
-            )
+        async with self._semaphore:  # cap fan-out so a big user base can't stampede Anthropic/Telegram
+            try:
+                await self._delivery(user=user, kind=kind, local_today=local_today)
+            except Exception as exc:
+                log.warning(
+                    "summary_delivery_failed",
+                    user_id=user.id,
+                    kind=kind,
+                    error=str(exc),
+                )
 
     async def run(self) -> None:
         """Long-running tick loop. Cancel the task to stop."""

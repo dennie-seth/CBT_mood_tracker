@@ -12,6 +12,19 @@ from app.domain.models import Entry, User
 from app.domain.repositories import EntryRepository
 from app.infrastructure.crypto import FernetCipher
 
+# Defense in depth: cap free-text size before encryption so a compromised bot
+# token (or a buggy client) can't grow encrypted blobs unbounded. 16 KiB per
+# field comfortably exceeds Telegram's ~4 KB message ceiling and any
+# reasonable thought-record paragraph.
+MAX_TEXT_BYTES = 16 * 1024
+
+
+def _check_text_size(name: str, value: str) -> None:
+    if len(value.encode("utf-8")) > MAX_TEXT_BYTES:
+        raise ValueError(
+            f"{name} exceeds {MAX_TEXT_BYTES} bytes (got {len(value.encode('utf-8'))})"
+        )
+
 
 @dataclass(frozen=True, slots=True)
 class EntryDTO:
@@ -47,6 +60,13 @@ class EntryService:
             raise ValueError(f"{metric_type} requires a numeric value")
         if metric_type in TEXT_METRICS and not (value_text or extra):
             raise ValueError(f"{metric_type} requires text content")
+
+        if value_text is not None:
+            _check_text_size("value_text", value_text)
+        if extra:
+            for k, v in extra.items():
+                if k.endswith("_text") and isinstance(v, str):
+                    _check_text_size(f"extra[{k}]", v)
 
         ts = recorded_at or datetime.now(tz=pytz.utc)
         if ts.tzinfo is None:

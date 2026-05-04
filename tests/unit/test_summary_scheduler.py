@@ -102,3 +102,33 @@ async def test_tick_swallows_per_user_failures(schedule_sm) -> None:
 
     # u2 still got delivered despite u1 raising.
     assert delivered == [222]
+
+
+async def test_tick_skips_users_no_longer_in_allowlist(schedule_sm) -> None:
+    """If the operator removes a Telegram ID from ALLOWED_TELEGRAM_IDS to revoke
+    access, the scheduler must NOT keep delivering Haiku summaries (which contain
+    decrypted excerpts of past entries) to that user. The allowlist is the gate
+    even for proactive output."""
+    revoked = await _seed_user(schedule_sm, id=1, telegram_id=111, tz="Europe/Berlin")
+    active = await _seed_user(schedule_sm, id=2, telegram_id=222, tz="Europe/Berlin")
+    async with schedule_sm() as session:
+        repo = SqlScheduleRepository(session)
+        await repo.set_daily(revoked.id, enabled=True, at=time(21, 0))
+        await repo.set_daily(active.id, enabled=True, at=time(21, 0))
+        await session.commit()
+
+    delivered: list[int] = []
+
+    async def deliver(*, user, kind, local_today) -> None:
+        delivered.append(user.telegram_id)
+
+    # Only `222` is in the allowlist now; `111` was revoked.
+    scheduler = SummaryScheduler(
+        sessionmaker=schedule_sm,
+        delivery=deliver,
+        allowed_telegram_ids=frozenset({222}),
+    )
+    now_utc = pytz.utc.localize(datetime(2026, 5, 4, 19, 0))
+    await scheduler.dispatch_due(now_utc)
+
+    assert delivered == [222]

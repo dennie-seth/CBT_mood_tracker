@@ -45,6 +45,7 @@ async def main() -> None:
     scheduler = SummaryScheduler(
         sessionmaker=container.sessionmaker,
         delivery=summary_service.send,
+        allowed_telegram_ids=settings.allowed_telegram_ids,
     )
 
     # Order matters: outermost first.

@@ -107,3 +107,41 @@ async def test_validates_required_fields(cipher, user) -> None:
         await svc.create(user, MetricType.MOOD)  # numeric metric, missing value
     with pytest.raises(ValueError):
         await svc.create(user, MetricType.NOTE)  # text metric, missing content
+
+
+async def test_value_text_too_long_rejected(cipher, user) -> None:
+    """Defense in depth against pump attacks: a compromised bot token shouldn't
+    let an attacker grow encrypted blobs unbounded. Per-field cap."""
+    from app.services.entry_service import MAX_TEXT_BYTES
+
+    svc = EntryService(FakeEntryRepo(), cipher)
+    with pytest.raises(ValueError):
+        await svc.create(user, MetricType.NOTE, value_text="x" * (MAX_TEXT_BYTES + 1))
+
+
+async def test_metadata_text_field_too_long_rejected(cipher, user) -> None:
+    from app.services.entry_service import MAX_TEXT_BYTES
+
+    svc = EntryService(FakeEntryRepo(), cipher)
+    huge = "x" * (MAX_TEXT_BYTES + 1)
+    with pytest.raises(ValueError):
+        await svc.create(
+            user,
+            MetricType.THOUGHT_RECORD,
+            extra={
+                "situation_text": "ok",
+                "automatic_thought_text": huge,
+                "distortion_text": "ok",
+                "reframe_text": "ok",
+            },
+        )
+
+
+async def test_value_text_at_cap_accepted(cipher, user) -> None:
+    """Sanity: exactly-at-cap text is allowed (≤ MAX_TEXT_BYTES bytes when UTF-8 encoded)."""
+    from app.services.entry_service import MAX_TEXT_BYTES
+
+    svc = EntryService(FakeEntryRepo(), cipher)
+    text = "x" * MAX_TEXT_BYTES
+    dto = await svc.create(user, MetricType.NOTE, value_text=text)
+    assert dto.value_text == text

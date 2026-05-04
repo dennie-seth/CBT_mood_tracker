@@ -122,6 +122,29 @@ async def test_send_stamps_last_sent_after_success(schedule_sm, cipher) -> None:
     assert prefs.weekly_last_sent_date is None
 
 
+async def test_send_stamps_before_bot_call_to_guarantee_at_most_once(schedule_sm, cipher) -> None:
+    """If bot.send_message raises after the AI succeeded, the at-most-once
+    guarantee says we'd rather drop this delivery than risk a double-send
+    on the next tick. So the last-sent date MUST already be stamped before
+    we hit Telegram.
+    """
+    user = await _make_user(schedule_sm)
+    ai = AsyncMock()
+    ai.answer = AsyncMock(return_value=AiAnswer(text="hi", artifacts=[]))
+    bot = AsyncMock()
+    bot.send_message = AsyncMock(side_effect=RuntimeError("telegram down"))
+    svc = _build_service(schedule_sm, ai, bot, cipher)
+
+    with pytest.raises(RuntimeError):
+        await svc.send(user, kind="daily", local_today=date(2026, 5, 4))
+
+    # Stamp must have been committed before the doomed send attempt.
+    async with schedule_sm() as session:
+        prefs = await SqlScheduleRepository(session).get(user.id)
+    assert prefs is not None
+    assert prefs.daily_last_sent_date == date(2026, 5, 4)
+
+
 async def test_send_does_not_stamp_when_ai_raises(schedule_sm, cipher) -> None:
     user = await _make_user(schedule_sm)
 

@@ -4,6 +4,7 @@ from collections.abc import Mapping
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
+import structlog
 from aiogram.fsm.state import State
 from aiogram.fsm.storage.base import BaseStorage, StateType, StorageKey
 from sqlalchemy import delete, select
@@ -11,6 +12,8 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.infrastructure.crypto import FernetCipher
 from app.infrastructure.fsm_models import FsmState
+
+log = structlog.get_logger(__name__)
 
 
 class PgFsmStorage(BaseStorage):
@@ -49,7 +52,22 @@ class PgFsmStorage(BaseStorage):
             row = await session.scalar(self._select_pk(key))
             if row is None or row.data_encrypted is None:
                 return {}
-            payload = self._cipher.decrypt_json(row.data_encrypted)
+            try:
+                payload = self._cipher.decrypt_json(row.data_encrypted)
+            except ValueError:
+                # Survive key rotation: an old in-flight blob encrypted with a
+                # key that's no longer present must not crash the bot. Treat
+                # the row as absent and self-heal by deleting it so the next
+                # write to this key starts fresh.
+                log.warning(
+                    "fsm_state_unreadable_after_key_rotation",
+                    bot_id=key.bot_id,
+                    chat_id=key.chat_id,
+                    user_id=key.user_id,
+                )
+                await session.delete(row)
+                await session.commit()
+                return {}
             return dict(payload) if isinstance(payload, dict) else {}
 
     async def close(self) -> None:

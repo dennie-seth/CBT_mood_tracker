@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from datetime import date
 from decimal import Decimal
-from typing import Any, Protocol
+from typing import Protocol
 
-from app.domain.models import AuditLog, Entry, User
+from app.domain.models import Entry, User
 
 
 class UserRepository(Protocol):
@@ -34,16 +34,9 @@ class EntryRepository(Protocol):
         ...
 
 
-class AuditRepository(Protocol):
-    async def add(self, entry: AuditLog) -> None: ...
-
-
 __all__ = [
     "UserRepository",
     "EntryRepository",
-    "AuditRepository",
     "User",
     "Entry",
-    "AuditLog",
-    "Any",
 ]

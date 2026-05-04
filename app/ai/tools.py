@@ -11,6 +11,18 @@ from app.services.entry_service import EntryService
 from app.services.pdf_service import PdfService
 
 
+def _safe_metric_types(types_raw: list[Any]) -> list[MetricType]:
+    """Coerce strings to MetricType, silently dropping unknowns. Public API
+    only — no reliance on `_value2member_map_`."""
+    out: list[MetricType] = []
+    for t in types_raw:
+        try:
+            out.append(MetricType(t))
+        except ValueError:
+            continue
+    return out
+
+
 TOOL_SCHEMAS: list[dict[str, Any]] = [
     {
         "name": "query_entries",
@@ -128,7 +140,7 @@ class ToolDispatcher:
         end = date.fromisoformat(args["end_date"])
         types_raw = args.get("metric_types") or []
         limit = min(int(args.get("limit", 200)), 1000)
-        metric_types = [MetricType(t) for t in types_raw if t in MetricType._value2member_map_]
+        metric_types = _safe_metric_types(types_raw)
         rows = await self.entry_service.list_range(
             self.user_id, start, end, metric_types or None
         )
@@ -172,7 +184,7 @@ class ToolDispatcher:
         start = date.fromisoformat(args["start_date"])
         end = date.fromisoformat(args["end_date"])
         types_raw = args.get("metric_types") or []
-        metrics = [MetricType(t) for t in types_raw if t in MetricType._value2member_map_]
+        metrics = _safe_metric_types(types_raw)
         df = await self.analysis_service.daily_summary(self.user_id, start, end)
         png = self.chart_service.line(df, metrics or None)
         fname = f"chart_{start.isoformat()}_{end.isoformat()}.png"

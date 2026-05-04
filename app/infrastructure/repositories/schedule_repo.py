@@ -48,7 +48,16 @@ class SqlScheduleRepository:
         *,
         enabled: bool,
         at: time | None = None,
+        now_local: datetime | None = None,
     ) -> SchedulePrefs:
+        """Enable/disable the daily summary.
+
+        When `enabled=True` and `now_local` is supplied, suppress today's
+        delivery if the chosen time has already passed today. This avoids
+        an unsolicited fire 1 minute after the user configures
+        `/dailyat 09:00` at 23:00. Pass `now_local=None` to keep the old
+        permissive behaviour (used by tests that don't care).
+        """
         prefs = await self._get_or_create(user_id)
         prefs.daily_enabled = enabled
         if at is not None:
@@ -56,6 +65,13 @@ class SqlScheduleRepository:
         if not enabled:
             # Forget the dedup stamp so re-enabling later doesn't suppress today's send.
             prefs.daily_last_sent_date = None
+        elif (
+            enabled
+            and now_local is not None
+            and prefs.daily_at is not None
+            and now_local.time() >= prefs.daily_at
+        ):
+            prefs.daily_last_sent_date = now_local.date()
         prefs.updated_at = datetime.now(tz=timezone.utc)
         return prefs
 
@@ -66,7 +82,11 @@ class SqlScheduleRepository:
         enabled: bool,
         weekday: int | None = None,
         at: time | None = None,
+        now_local: datetime | None = None,
     ) -> SchedulePrefs:
+        """Same suppression contract as `set_daily`, but also gated on weekday:
+        only suppress today if today's weekday matches the configured one.
+        Otherwise the next fire is in the future anyway."""
         prefs = await self._get_or_create(user_id)
         prefs.weekly_enabled = enabled
         if weekday is not None:
@@ -75,6 +95,15 @@ class SqlScheduleRepository:
             prefs.weekly_at = at
         if not enabled:
             prefs.weekly_last_sent_date = None
+        elif (
+            enabled
+            and now_local is not None
+            and prefs.weekly_at is not None
+            and prefs.weekly_weekday is not None
+            and now_local.weekday() == prefs.weekly_weekday
+            and now_local.time() >= prefs.weekly_at
+        ):
+            prefs.weekly_last_sent_date = now_local.date()
         prefs.updated_at = datetime.now(tz=timezone.utc)
         return prefs
 

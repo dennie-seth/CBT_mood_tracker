@@ -130,6 +130,36 @@ async def test_keys_are_isolated_per_user(fsm_sm, cipher) -> None:
     assert await storage.get_data(b) == {"who": "B"}
 
 
+async def test_get_data_survives_key_rotation_with_unreadable_blob(fsm_sm, cipher) -> None:
+    """After Fernet key rotation removes the key that encrypted an in-flight
+    FSM blob, a stale row must NOT crash the next handler — return {} and
+    self-heal by deleting the unreadable row.
+    """
+    from cryptography.fernet import Fernet
+    from app.infrastructure.crypto import FernetCipher
+    from app.infrastructure.fsm_storage import PgFsmStorage
+
+    # Storage A encrypts with KEY_OLD.
+    old_key = Fernet.generate_key().decode()
+    storage_old = PgFsmStorage(fsm_sm, FernetCipher([old_key]))
+    key = make_key()
+    await storage_old.set_state(key, "MidFlow:step1")
+    await storage_old.set_data(key, {"sensitive": "Чувствую тревогу"})
+
+    # Storage B has only KEY_NEW — operator removed KEY_OLD before re-encryption.
+    new_key = Fernet.generate_key().decode()
+    storage_new = PgFsmStorage(fsm_sm, FernetCipher([new_key]))
+
+    # Must not raise. Returns {} (unreadable → effectively absent).
+    assert await storage_new.get_data(key) == {}
+
+    # Self-heal: the stale row should be gone so subsequent flows start fresh.
+    rows = []
+    async with fsm_sm() as session:
+        rows = (await session.scalars(select(FsmState))).all()
+    assert rows == []
+
+
 async def test_opportunistic_cleanup_drops_stale_rows(fsm_sm, cipher) -> None:
     storage = PgFsmStorage(fsm_sm, cipher)
     stale_key = make_key(user_id=1)

@@ -12,6 +12,7 @@ from app.services.schedule_service import (
     parse_time,
     parse_weekly_args,
 )
+from app.services.time import now_in_tz
 
 router = Router()
 
@@ -65,7 +66,9 @@ async def cmd_dailyat(
         await message.answer(f"Could not parse time: {e}")
         return
     repo = SqlScheduleRepository(session)
-    await repo.set_daily(user.id, enabled=True, at=at)
+    await repo.set_daily(
+        user.id, enabled=True, at=at, now_local=now_in_tz(user.timezone)
+    )
     await message.answer(
         f"Daily summary enabled at {at.strftime('%H:%M')} ({user.timezone})."
     )
@@ -102,7 +105,13 @@ async def cmd_weeklyat(
         await message.answer(f"Could not parse: {e}")
         return
     repo = SqlScheduleRepository(session)
-    await repo.set_weekly(user.id, enabled=True, weekday=weekday, at=at)
+    await repo.set_weekly(
+        user.id,
+        enabled=True,
+        weekday=weekday,
+        at=at,
+        now_local=now_in_tz(user.timezone),
+    )
     await message.answer(
         f"Weekly summary enabled on {format_weekday(weekday)} "
         f"at {at.strftime('%H:%M')} ({user.timezone})."

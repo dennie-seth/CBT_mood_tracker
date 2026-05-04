@@ -34,6 +34,10 @@ class Container:
 
     async def aclose(self) -> None:
         await self.fsm_storage.close()
+        try:
+            await self.ai_client.close()
+        except Exception:
+            pass
         await self.engine.dispose()
 
 

@@ -118,3 +118,85 @@ async def test_stamp_daily_sent_persists(schedule_sm) -> None:
         prefs = await SqlScheduleRepository(session).get(user.id)
     assert prefs is not None
     assert prefs.daily_last_sent_date == date(2026, 5, 4)
+
+
+# --- Regression: enabling at a past time-of-day must not fire same day ---
+
+async def test_set_daily_enabling_after_set_time_suppresses_today(schedule_sm) -> None:
+    """User runs /dailyat 09:00 at 23:00 local. The scheduler's `>=` rule
+    would otherwise fire 1 minute later. Suppress same-day delivery so the
+    first one lands tomorrow at 09:00."""
+    from datetime import date, datetime
+
+    import pytz
+
+    user = await _make_user(schedule_sm)
+    now_local = pytz.timezone("Europe/Berlin").localize(datetime(2026, 5, 4, 23, 0))
+    async with schedule_sm() as session:
+        repo = SqlScheduleRepository(session)
+        await repo.set_daily(user.id, enabled=True, at=time(9, 0), now_local=now_local)
+        await session.commit()
+
+    async with schedule_sm() as session:
+        prefs = await SqlScheduleRepository(session).get(user.id)
+    assert prefs is not None
+    assert prefs.daily_last_sent_date == date(2026, 5, 4)
+
+
+async def test_set_daily_enabling_before_set_time_leaves_last_sent_none(schedule_sm) -> None:
+    """User runs /dailyat 21:00 at 08:00 local. The first delivery should
+    happen TODAY at 21:00, so no suppression."""
+    from datetime import datetime
+
+    import pytz
+
+    user = await _make_user(schedule_sm)
+    now_local = pytz.timezone("Europe/Berlin").localize(datetime(2026, 5, 4, 8, 0))
+    async with schedule_sm() as session:
+        repo = SqlScheduleRepository(session)
+        await repo.set_daily(user.id, enabled=True, at=time(21, 0), now_local=now_local)
+        await session.commit()
+
+    async with schedule_sm() as session:
+        prefs = await SqlScheduleRepository(session).get(user.id)
+    assert prefs is not None
+    assert prefs.daily_last_sent_date is None
+
+
+async def test_set_weekly_suppression_works_only_when_weekday_matches(schedule_sm) -> None:
+    """If today IS the configured weekday and the time has passed, suppress.
+    Otherwise leave last_sent_date alone — the next due day is in the future
+    and there's no risk of an immediate fire."""
+    from datetime import date, datetime
+
+    import pytz
+
+    user = await _make_user(schedule_sm)
+    # 2026-05-10 is Sunday (ISO weekday 6). Set weekly to Sun 09:00 at 23:00 local.
+    sun_evening = pytz.timezone("UTC").localize(datetime(2026, 5, 10, 23, 0))
+    async with schedule_sm() as session:
+        repo = SqlScheduleRepository(session)
+        await repo.set_weekly(
+            user.id, enabled=True, weekday=6, at=time(9, 0), now_local=sun_evening
+        )
+        await session.commit()
+
+    async with schedule_sm() as session:
+        prefs = await SqlScheduleRepository(session).get(user.id)
+    assert prefs is not None
+    assert prefs.weekly_last_sent_date == date(2026, 5, 10)
+
+    # But on Monday after configuring for Sunday, the next due is six days away — leave it None.
+    user2 = await _make_user(schedule_sm, telegram_id=2)
+    mon_evening = pytz.timezone("UTC").localize(datetime(2026, 5, 11, 23, 0))
+    async with schedule_sm() as session:
+        repo = SqlScheduleRepository(session)
+        await repo.set_weekly(
+            user2.id, enabled=True, weekday=6, at=time(9, 0), now_local=mon_evening
+        )
+        await session.commit()
+
+    async with schedule_sm() as session:
+        prefs = await SqlScheduleRepository(session).get(user2.id)
+    assert prefs is not None
+    assert prefs.weekly_last_sent_date is None

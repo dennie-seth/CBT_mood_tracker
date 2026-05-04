@@ -51,6 +51,12 @@ class SummaryService:
         self._bot = bot
 
     async def send(self, user: User, *, kind: SummaryKind, local_today: date) -> None:
+        # Order is deliberate: AI → stamp+commit → send.
+        #   - AI failure: nothing stamped, next tick retries (good).
+        #   - Stamp/commit failure: nothing sent, next tick retries (good).
+        #   - Send failure (post-stamp): the user misses today's summary, but
+        #     we MUST NOT re-send tomorrow because a duplicate therapy summary
+        #     is more confusing than a missing one. At-most-once is correct.
         async with self._sm() as session:
             entry_repo = SqlEntryRepository(session)
             entry_service = EntryService(entry_repo, self._cipher)
@@ -69,19 +75,6 @@ class SummaryService:
                 question=prompt, dispatcher=dispatcher, today=local_today
             )
 
-            if answer.text:
-                await self._bot.send_message(
-                    chat_id=user.telegram_id, text=answer.text
-                )
-            for art in answer.artifacts:
-                file = BufferedInputFile(art.data, filename=art.filename)
-                if art.kind == "image/png":
-                    await self._bot.send_photo(chat_id=user.telegram_id, photo=file)
-                else:
-                    await self._bot.send_document(
-                        chat_id=user.telegram_id, document=file
-                    )
-
             schedule_repo = SqlScheduleRepository(session)
             if kind == "daily":
                 await schedule_repo.stamp_daily_sent(user.id, on=local_today)
@@ -89,10 +82,27 @@ class SummaryService:
                 await schedule_repo.stamp_weekly_sent(user.id, on=local_today)
             await session.commit()
 
-            log.info(
-                "summary_sent",
-                user_id=user.id,
-                kind=kind,
-                local_date=local_today.isoformat(),
-                artifact_count=len(answer.artifacts),
+        # Outside the session — at this point we've durably committed the
+        # at-most-once token. If any of the sends raise, the exception
+        # propagates so the operator sees it in logs, but the next tick
+        # will not retry.
+        if answer.text:
+            await self._bot.send_message(
+                chat_id=user.telegram_id, text=answer.text
             )
+        for art in answer.artifacts:
+            file = BufferedInputFile(art.data, filename=art.filename)
+            if art.kind == "image/png":
+                await self._bot.send_photo(chat_id=user.telegram_id, photo=file)
+            else:
+                await self._bot.send_document(
+                    chat_id=user.telegram_id, document=file
+                )
+
+        log.info(
+            "summary_sent",
+            user_id=user.id,
+            kind=kind,
+            local_date=local_today.isoformat(),
+            artifact_count=len(answer.artifacts),
+        )
