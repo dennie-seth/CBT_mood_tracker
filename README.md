@@ -40,25 +40,32 @@ The bot runs migrations on start and connects via long-polling. Send `/start` to
 
 ## Commands
 
-| Command | Description |
+The bot's `/help` lists every command with a *use-case* sentence — when to reach for it, not just what it does. Quick reference:
+
+| Command | When to use |
 |---|---|
-| `/start`, `/help` | Show help |
-| `/log` | Guided multi-step entry for any metric |
-| `/mood` `/sleep` `/energy` `/hunger` `/anxiety` `/stress` `/pain` `/irritability` `/focus` | One-tap 1–10 scale |
-| `/sleephours` | Type sleep duration (hours, e.g. `7.5`) |
-| `/note <text>` | Free-form journal (encrypted) |
-| `/thought` | Guided CBT thought record (situation → automatic thought → distortion → reframe), encrypted |
+| `/start`, `/help` | Show the full help with use cases |
+| `/log` | Logging a less-common metric without remembering its specific command |
+| `/mood` `/sleep` `/energy` `/hunger` `/anxiety` `/stress` `/pain` `/irritability` `/focus` | Fast in-the-moment 1–10 capture |
+| `/sleephours` | Right after waking, log how long you actually slept (e.g. `7.5`) |
+| `/note <text>` | Something on your mind that doesn't fit any metric (encrypted) |
+| `/thought` | Catching a strong negative thought — guided CBT thought record |
+| `/backfill <date> <metric> <value>` | Logging an entry for a past date |
+| `/activate` | Feeling low and want a concrete mood-lifting step (Behavioral Activation) |
+| `/plans` | Reviewing what plans you've committed to |
+| `/done` | Just completed a planned activity — rate the actual lift |
+| `/skip` | Skipping a plan, with optional reason |
 | `/today`, `/week` | Today's / last 7 days' entries |
-| `/chart [7d\|30d\|90d\|all]` | PNG chart of numeric metrics |
-| `/export [7d\|30d\|90d\|all]` | Multi-page PDF report |
-| `/ask <question>` | Ask Claude anything about your data |
-| `/schedule` | Show current daily / weekly auto-summary settings |
-| `/dailyat 21:00` | Enable daily Haiku summary at this time (your tz) |
+| `/chart [7d\|30d\|90d\|all]` | Spotting trends visually (PNG chart) |
+| `/export [7d\|30d\|90d\|all]` | Sharing with a therapist or archiving a period (PDF) |
+| `/ask <question>` | Analysis the built-in views don't cover |
+| `/schedule` | Inspecting current daily / weekly auto-summary settings |
+| `/dailyat 21:00` | Enable an evening Haiku summary in your tz |
 | `/dailyoff` | Disable daily summary |
-| `/weeklyat sun 21:00` | Enable weekly Haiku summary on this day & time |
+| `/weeklyat sun 21:00` | Enable a weekly Haiku summary on this day & time |
 | `/weeklyoff` | Disable weekly summary |
-| `/tz <IANA>` | Set your timezone (e.g. `/tz Europe/Berlin`) |
-| `/cancel` | Abort current step |
+| `/tz <IANA>` | Once on first login (e.g. `/tz Europe/Berlin`) — day boundaries depend on it |
+| `/cancel` | Abort the current guided step |
 
 ## What gets tracked
 
