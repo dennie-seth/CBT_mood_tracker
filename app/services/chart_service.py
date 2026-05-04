@@ -16,13 +16,20 @@ class ChartService:
     """Renders matplotlib figures into PNG bytes."""
 
     def line(self, df: pd.DataFrame, metrics: list[MetricType] | None = None) -> bytes:
-        if df.empty:
+        if df.empty or df.shape[1] == 0:
             return self._placeholder("No data to chart for this period.")
 
-        cols = [m.value for m in metrics] if metrics else list(df.columns)
-        cols = [c for c in cols if c in df.columns]
-        if not cols:
-            return self._placeholder("No matching metrics for this period.")
+        if metrics:
+            requested = [m.value for m in metrics]
+            cols = [c for c in requested if c in df.columns]
+            # Best-effort fallback: if NONE of the requested metrics are in the
+            # data (e.g. AI asked for mood/energy/anxiety but the user only
+            # logged sleep this week), render whatever data IS there instead
+            # of a useless "no matching metrics" image.
+            if not cols:
+                cols = list(df.columns)
+        else:
+            cols = list(df.columns)
 
         fig, ax = plt.subplots(figsize=(10, 5))
         for c in cols:

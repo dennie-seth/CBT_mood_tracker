@@ -52,6 +52,11 @@ The bot runs migrations on start and connects via long-polling. Send `/start` to
 | `/chart [7d\|30d\|90d\|all]` | PNG chart of numeric metrics |
 | `/export [7d\|30d\|90d\|all]` | Multi-page PDF report |
 | `/ask <question>` | Ask Claude anything about your data |
+| `/schedule` | Show current daily / weekly auto-summary settings |
+| `/dailyat 21:00` | Enable daily Haiku summary at this time (your tz) |
+| `/dailyoff` | Disable daily summary |
+| `/weeklyat sun 21:00` | Enable weekly Haiku summary on this day & time |
+| `/weeklyoff` | Disable weekly summary |
 | `/tz <IANA>` | Set your timezone (e.g. `/tz Europe/Berlin`) |
 | `/cancel` | Abort current step |
 
@@ -119,6 +124,12 @@ FERNET_KEYS=<new_key>,<old_key>
 ```
 
 The first key encrypts new ciphertext. All keys are tried on decrypt. Once the old key is removed from the env, only data re-encrypted with the new key remains readable — re-encrypt historical rows before deleting an old key.
+
+## Auto summaries
+
+Each user can opt in to a daily or weekly Haiku-generated summary. Settings live in `schedule_prefs` (Postgres) and are interpreted in the user's timezone. A once-per-minute in-process tick (`SummaryScheduler`, started from `app/main.py`) scans enabled rows and invokes `SummaryService.send` for whoever's due, idempotently — `*_last_sent_date` prevents double delivery across restarts.
+
+The empty-day case still delivers: the daily prompt asks Haiku to send a brief warm acknowledgement plus a single low-effort reflection question. Haiku replies in the user's language inferred from recent entries.
 
 ## Running tests
 

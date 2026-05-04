@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from app.config import get_settings
 from app.domain.models import Base
 from app.infrastructure import fsm_models  # noqa: F401  -- register FsmState with Base.metadata
+from app.infrastructure import schedule_models  # noqa: F401  -- register SchedulePrefs
 
 config = context.config
 

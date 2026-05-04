@@ -13,6 +13,8 @@ from app.bot.middlewares.user_ctx import UserContextMiddleware
 from app.config import get_settings
 from app.di import build_container
 from app.logging_setup import configure_logging
+from app.services.schedule_service import SummaryScheduler
+from app.services.summary_service import SummaryService
 
 
 def make_bot(token: str) -> Bot:
@@ -32,6 +34,19 @@ async def main() -> None:
     bot = make_bot(settings.bot_token)
     dp = Dispatcher(storage=container.fsm_storage)
 
+    summary_service = SummaryService(
+        ai_service=container.ai_service,
+        sessionmaker=container.sessionmaker,
+        cipher=container.cipher,
+        chart_service=container.chart_service,
+        pdf_service=container.pdf_service,
+        bot=bot,
+    )
+    scheduler = SummaryScheduler(
+        sessionmaker=container.sessionmaker,
+        delivery=summary_service.send,
+    )
+
     # Order matters: outermost first.
     dp.update.outer_middleware(AllowlistMiddleware(settings.allowed_telegram_ids))
     dp.update.outer_middleware(ContextMiddleware(container))
@@ -41,10 +56,12 @@ async def main() -> None:
     register_all(dp)
 
     log.info("bot_starting", model=settings.anthropic_model)
+    scheduler.start()
     try:
         await bot.delete_webhook(drop_pending_updates=False)
         await dp.start_polling(bot)
     finally:
+        await scheduler.stop()
         await container.aclose()
         await bot.session.close()
 
