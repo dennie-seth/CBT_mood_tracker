@@ -92,6 +92,45 @@ async def test_clearing_state_and_data_deletes_row(fsm_sm, cipher) -> None:
     assert rows == []
 
 
+async def test_clear_after_state_only_flow_does_not_crash(fsm_sm, cipher) -> None:
+    """Regression: aiogram's ``FSMContext.clear()`` calls ``set_state(None)``
+    then ``set_data({})``. The first call deletes the row (state was the
+    only thing on it), so the second call finds nothing, used to add a
+    fresh empty row, and then immediately tried to ``session.delete()`` it
+    while still pending — raising ``InvalidRequestError`` and rolling back
+    the surrounding handler's DB writes (e.g. an entry that just got
+    created via ``/note``).
+
+    This used to corrupt the /note two-step flow: the entry was inserted
+    in the same transaction, but state.clear() raised, so the middleware
+    rolled the entry back too. Repro: set state only (no data), then
+    clear() — must not raise, and the row must be gone.
+    """
+    storage = PgFsmStorage(fsm_sm, cipher)
+    key = make_key()
+    await storage.set_state(key, "JournalFlow:enter_text")
+
+    # Mirror aiogram's FSMContext.clear() exactly.
+    await storage.set_state(key, None)
+    await storage.set_data(key, {})  # this is what used to raise
+
+    async with fsm_sm() as session:
+        rows = (await session.scalars(select(FsmState))).all()
+    assert rows == []
+
+
+async def test_set_data_empty_when_no_row_exists_is_noop(fsm_sm, cipher) -> None:
+    """A bare ``set_data({})`` against a key that has never been touched
+    must not create a phantom empty row — and must not crash."""
+    storage = PgFsmStorage(fsm_sm, cipher)
+    key = make_key(user_id=42)
+    await storage.set_data(key, {})
+
+    async with fsm_sm() as session:
+        rows = (await session.scalars(select(FsmState))).all()
+    assert rows == []
+
+
 async def test_update_data_merges(fsm_sm, cipher) -> None:
     storage = PgFsmStorage(fsm_sm, cipher)
     key = make_key()

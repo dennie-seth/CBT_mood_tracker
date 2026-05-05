@@ -84,17 +84,35 @@ class PgFsmStorage(BaseStorage):
         now = datetime.now(timezone.utc)
         async with self._sm() as session:
             row = await session.scalar(self._select_pk(key))
+
+            # Compute what the row would hold after applying this update.
+            new_state = state if state is not _UNSET else (
+                row.state if row is not None else None
+            )
+            new_data = data_encrypted if data_encrypted is not _UNSET else (
+                row.data_encrypted if row is not None else None
+            )
+
+            if new_state is None and new_data is None:
+                # The row would carry nothing — delete it if it exists in the
+                # DB. If we never had a row, do nothing (NOT add+delete: a
+                # transient row is "pending" and `session.delete()` would
+                # raise "Instance is not persisted"; this regression bit the
+                # /note two-step flow because aiogram's `FSMContext.clear()`
+                # calls `set_state(None)` then `set_data({})` back-to-back,
+                # and the second call lands here with no row in the DB).
+                if row is not None:
+                    await session.delete(row)
+                await self._cleanup(session, now)
+                await session.commit()
+                return
+
             if row is None:
                 row = FsmState(**self._pk_dict(key))
                 session.add(row)
-            if state is not _UNSET:
-                row.state = state  # type: ignore[assignment]
-            if data_encrypted is not _UNSET:
-                row.data_encrypted = data_encrypted  # type: ignore[assignment]
+            row.state = new_state  # type: ignore[assignment]
+            row.data_encrypted = new_data  # type: ignore[assignment]
             row.updated_at = now
-
-            if row.state is None and row.data_encrypted is None:
-                await session.delete(row)
 
             await self._cleanup(session, now)
             await session.commit()
