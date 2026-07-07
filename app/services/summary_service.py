@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 from typing import Literal
 
 import structlog
@@ -8,12 +8,13 @@ from aiogram import Bot
 from aiogram.types import BufferedInputFile
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from app.ai.summary_prompts import DAILY_PROMPT, WEEKLY_PROMPT
+from app.ai.summary_prompts import DAILY_PROMPT, WEEKLY_PROMPT, build_weekly_context
 from app.ai.tools import ToolDispatcher
 from app.domain.models import User
 from app.infrastructure.crypto import FernetCipher
 from app.infrastructure.repositories.entry_repo import SqlEntryRepository
 from app.infrastructure.repositories.schedule_repo import SqlScheduleRepository
+from app.infrastructure.repositories.weekly_summary_repo import SqlWeeklySummaryRepository
 from app.services.ai_service import AiService
 from app.services.analysis_service import AnalysisService
 from app.services.chart_service import ChartService
@@ -23,6 +24,9 @@ from app.services.pdf_service import PdfService
 log = structlog.get_logger(__name__)
 
 SummaryKind = Literal["daily", "weekly"]
+
+# How many prior weekly summaries to feed the model as continuity context.
+WEEKLY_CONTINUITY_COUNT = 3
 
 
 class SummaryService:
@@ -70,9 +74,28 @@ class SummaryService:
                 pdf_service=self._pdf,
             )
 
-            prompt = DAILY_PROMPT if kind == "daily" else WEEKLY_PROMPT
+            summary_repo = SqlWeeklySummaryRepository(session)
+            # The weekly digest gets a memory: feed the last few weeks'
+            # summaries in as continuity context before generating this one.
+            # Decryption goes through our own cipher — SummaryService is the
+            # crypto chokepoint for summary text, just as EntryService is for
+            # entries. Daily summaries stay stateless.
+            week_start = local_today - timedelta(days=6)
+            if kind == "weekly":
+                prior_rows = await summary_repo.latest(
+                    user.id, limit=WEEKLY_CONTINUITY_COUNT
+                )
+                priors = [
+                    (r.week_start, r.week_end, self._cipher.decrypt(r.summary_text_encrypted))
+                    for r in reversed(prior_rows)  # newest-first -> chronological
+                ]
+                context = build_weekly_context(priors)
+                question = f"{context}\n\n{WEEKLY_PROMPT}" if context else WEEKLY_PROMPT
+            else:
+                question = DAILY_PROMPT
+
             answer = await self._ai.answer(
-                question=prompt,
+                question=question,
                 dispatcher=dispatcher,
                 today=local_today,
                 target_language=user.language,
@@ -83,6 +106,23 @@ class SummaryService:
                 await schedule_repo.stamp_daily_sent(user.id, on=local_today)
             else:
                 await schedule_repo.stamp_weekly_sent(user.id, on=local_today)
+                # Persist this week's summary (encrypted at rest) so next week
+                # can build on it. Same transaction as the stamp: if the commit
+                # fails, neither lands and the next tick retries cleanly.
+                if answer.text:
+                    await summary_repo.add(
+                        user.id,
+                        week_start=week_start,
+                        week_end=local_today,
+                        summary_text_encrypted=self._cipher.encrypt(answer.text),
+                    )
+                    log.info(
+                        "weekly_summary_stored",
+                        user_id=user.id,
+                        week_start=week_start.isoformat(),
+                        week_end=local_today.isoformat(),
+                        chars=len(answer.text),
+                    )
             await session.commit()
 
         # Outside the session — at this point we've durably committed the
