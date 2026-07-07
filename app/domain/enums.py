@@ -76,3 +76,56 @@ METRIC_LABELS: dict[MetricType, str] = {
     MetricType.COPING: "Coping strategy",
     MetricType.NOTE: "Free-form note",
 }
+
+
+# Scale semantics so the assistant interprets numeric values consistently.
+# Each line states the polarity (which direction is "good") and what low /
+# mid / high roughly mean. Kept English — the domain stays language-agnostic;
+# the AI reply language is handled separately in AiService.
+METRIC_SEMANTICS: dict[MetricType, str] = {
+    MetricType.SLEEP_HOURS: (
+        "Hours of sleep (not a 1-10 scale). Healthy band is roughly 7-9h; "
+        "both under ~6h and over ~10h are notable rather than 'good'."
+    ),
+    MetricType.SLEEP_QUALITY: (
+        "Higher is better. 1-3 = poor/restless, 4-6 = okay, 7-10 = restful."
+    ),
+    MetricType.MOOD: (
+        "Higher is better. 1-3 = low/down, 4-6 = neutral, 7-10 = good/positive."
+    ),
+    MetricType.ENERGY: (
+        "Higher is better. 1-3 = depleted, 4-6 = moderate, 7-10 = energetic."
+    ),
+    MetricType.HUNGER: (
+        "Appetite level — not good or bad in itself. 1-3 = little appetite, "
+        "4-6 = normal, 7-10 = strong appetite. Extremes are the signal."
+    ),
+    MetricType.ANXIETY: (
+        "Higher is worse. 1-3 = calm, 4-6 = moderate, 7-10 = high/distressing."
+    ),
+    MetricType.STRESS: (
+        "Higher is worse. 1-3 = relaxed, 4-6 = moderate, 7-10 = overwhelmed."
+    ),
+    MetricType.IRRITABILITY: (
+        "Higher is worse. 1-3 = even-tempered, 4-6 = moderate, 7-10 = very irritable."
+    ),
+    MetricType.FOCUS: (
+        "Higher is better. 1-3 = scattered, 4-6 = okay, 7-10 = sharp."
+    ),
+    MetricType.PAIN: (
+        "Higher is worse. 0-1 = none, 2-4 = mild, 5-7 = moderate, 8-10 = severe."
+    ),
+}
+
+
+def metric_semantics_block() -> str:
+    """Render the numeric-scale semantics as a stable, prompt-ready block.
+
+    Ordered by the ``MetricType`` definition order so the output is
+    deterministic (handy for prompt caching and tests).
+    """
+    return "\n".join(
+        f"- {METRIC_LABELS[m]}: {METRIC_SEMANTICS[m]}"
+        for m in MetricType
+        if m in NUMERIC_METRICS
+    )

@@ -4,6 +4,8 @@ from dataclasses import dataclass, field
 from datetime import date
 from typing import Any
 
+import pytz
+
 from app.domain.enums import MetricType
 from app.services.analysis_service import AnalysisService
 from app.services.chart_service import ChartService
@@ -28,8 +30,11 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
         "name": "query_entries",
         "description": (
             "Fetch the user's entries between two ISO dates (inclusive). "
-            "Optionally filter by metric_types. Returns a list of entries with "
-            "numeric value, free-text value, tags and metadata."
+            "Optionally filter by metric_types. Returns entries in chronological "
+            "order, each with its local date and time (the user's timezone), "
+            "numeric value, free-text value, tags and metadata. Use this — not "
+            "daily_summary — when the order of events or the link between a note "
+            "and a nearby metric matters."
         ),
         "input_schema": {
             "type": "object",
@@ -145,21 +150,25 @@ class ToolDispatcher:
             self.user_id, start, end, metric_types or None
         )
         rows = rows[:limit]
-        return {
-            "count": len(rows),
-            "entries": [
+        tz = pytz.timezone(self.user_timezone)
+        entries = []
+        for r in rows:
+            local = r.recorded_at.astimezone(tz)
+            entries.append(
                 {
                     "date": r.entry_date.isoformat(),
-                    "recorded_at": r.recorded_at.isoformat(),
+                    "time": local.strftime("%H:%M"),
+                    "recorded_at": local.isoformat(),
                     "metric_type": r.metric_type.value,
-                    "value_numeric": r.value_numeric,
+                    "value_numeric": (
+                        float(r.value_numeric) if r.value_numeric is not None else None
+                    ),
                     "value_text": r.value_text,
                     "tags": r.tags,
                     "extra": r.extra,
                 }
-                for r in rows
-            ],
-        }
+            )
+        return {"count": len(entries), "entries": entries}
 
     async def _daily_summary(self, args: dict[str, Any]) -> dict[str, Any]:
         start = date.fromisoformat(args["start_date"])
