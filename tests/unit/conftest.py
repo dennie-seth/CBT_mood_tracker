@@ -15,6 +15,7 @@ from app.domain.models import User
 from app.infrastructure.crypto import FernetCipher
 from app.infrastructure.fsm_models import FsmState
 from app.infrastructure.schedule_models import SchedulePrefs
+from app.infrastructure.summary_models import WeeklySummary
 
 
 @pytest_asyncio.fixture()
@@ -43,7 +44,8 @@ def cipher() -> FernetCipher:
 
 @pytest_asyncio.fixture()
 async def schedule_sm() -> AsyncIterator[async_sessionmaker[AsyncSession]]:
-    """SQLite in-memory engine with `users` + `schedule_prefs` tables only.
+    """SQLite in-memory engine with `users` + `schedule_prefs` +
+    `weekly_summaries` tables only.
 
     Skips Entry (Postgres-only ARRAY/JSONB) and FsmState (not needed here)
     so each test starts with a minimal, fast schema.
@@ -52,6 +54,7 @@ async def schedule_sm() -> AsyncIterator[async_sessionmaker[AsyncSession]]:
     async with engine.begin() as conn:
         await conn.run_sync(User.__table__.create)
         await conn.run_sync(SchedulePrefs.__table__.create)
+        await conn.run_sync(WeeklySummary.__table__.create)
     sm = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
     try:
         yield sm
