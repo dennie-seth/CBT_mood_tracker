@@ -2,6 +2,15 @@
 .env.*
 !.env.example
 
+# Secrets / credential material (defense-in-depth)
+*.key
+*.pem
+*.pfx
+*.p12
+credentials.json
+secrets.json
+service-account*.json
+
 __pycache__/
 *.py[cod]
 *$py.class
