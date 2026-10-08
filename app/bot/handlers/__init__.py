@@ -7,6 +7,7 @@ from app.bot.handlers import (
     ask,
     backfill,
     chart,
+    day,
     entry_actions,
     checkins,
     export,
@@ -17,6 +18,7 @@ from app.bot.handlers import (
     migraine,
     plain,
     quick,
+    recent,
     schedule,
     start,
     therapist,
@@ -34,6 +36,8 @@ def register_all(dp: Dispatcher) -> None:
     dp.include_router(backfill.router)
     dp.include_router(journal.router)
     dp.include_router(activate.router)
+    dp.include_router(day.router)
+    dp.include_router(recent.router)
     dp.include_router(migraine.router)
     dp.include_router(today.router)
     dp.include_router(tz.router)

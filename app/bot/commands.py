@@ -17,7 +17,8 @@ log = structlog.get_logger(__name__)
 
 # Curated, most-used first. Rarely used commands stay in /help only.
 MENU: tuple[str, ...] = (
-    "mood", "anxiety", "migraine", "note", "thought", "today", "week", "ask",
+    "mood", "anxiety", "day", "migraine", "note", "thought", "today", "week", "ask",
+    "recent",
     "log", "activate", "done", "chart", "migraines", "therapist",
     "home", "lang", "help", "cancel",
 )

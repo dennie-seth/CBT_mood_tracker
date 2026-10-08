@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from aiogram import Router
+from aiogram import F, Router
 from aiogram.filters import Command, CommandObject
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message
+from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.bot.deps import entry_service
@@ -79,7 +79,44 @@ async def thought_auto(message: Message, state: FSMContext, user: User) -> None:
         return
     await state.update_data(automatic_thought_text=message.text.strip())
     await state.set_state(ThoughtFlow.distortion)
-    await message.answer(t(user.language, "thought.ask_distortion"))
+    await message.answer(
+        t(user.language, "thought.ask_distortion"),
+        reply_markup=_distortion_keyboard(user.language),
+    )
+
+
+DISTORTIONS: tuple[str, ...] = (
+    "catastrophising", "all_or_nothing", "mind_reading", "fortune_telling",
+    "personalisation", "overgeneralisation", "labelling", "shoulds",
+    "emotional_reasoning", "discounting_positive",
+)
+
+
+def _distortion_keyboard(lang: str) -> InlineKeyboardMarkup:
+    buttons = [
+        InlineKeyboardButton(text=t(lang, f"dist.{k}"), callback_data=f"td:{k}")
+        for k in DISTORTIONS
+    ]
+    rows = [buttons[i:i + 2] for i in range(0, len(buttons), 2)]
+    rows.append([InlineKeyboardButton(text=t(lang, "dist.other"), callback_data="td:other")])
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+@router.callback_query(ThoughtFlow.distortion, F.data.startswith("td:"))
+async def distortion_tapped(cb: CallbackQuery, state: FSMContext, user: User) -> None:
+    key = (cb.data or "").split(":", 1)[1]
+    msg = cb.message if isinstance(cb.message, Message) else None
+    if key == "other" or key not in DISTORTIONS:
+        if msg:
+            await msg.edit_text(t(user.language, "thought.type_distortion"))
+        await cb.answer()
+        return  # stay in ThoughtFlow.distortion; the typed handler takes it
+    label = t(user.language, f"dist.{key}")
+    await state.update_data(distortion_text=label)
+    await state.set_state(ThoughtFlow.reframe)
+    if msg:
+        await msg.edit_text(f"✓ {label}\n\n{t(user.language, 'thought.ask_reframe')}")
+    await cb.answer()
 
 
 @router.message(ThoughtFlow.distortion)

@@ -55,3 +55,12 @@ class PlainTextFlow(StatesGroup):
 
 class AskFlow(StatesGroup):
     question = State()
+
+
+class DayFlow(StatesGroup):
+    # Data: step (index into DAY_METRICS), ids, readings.
+    active = State()
+
+
+class RecentFlow(StatesGroup):
+    edit_text = State()  # data: entry_id, prompt_id

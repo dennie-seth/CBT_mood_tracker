@@ -45,6 +45,8 @@ The bot's `/help` lists every command with a *use-case* sentence — when to rea
 | Command | When to use |
 |---|---|
 | `/start`, `/help` | Show the full help with use cases |
+| `/day` | Evening check-in in a few taps: mood, energy, anxiety, sleep (each saved as you go, Undo at the end) |
+| `/recent` | Fix a wrong number, edit a note, or delete one of your latest entries |
 | `/home` / `/home off` | Shortcut buttons under the text field — your two most-logged metrics, migraine, note, today, ask |
 | *(just type)* `mood 6 anxiety 7 slept 6.5` | Log several metrics in one message (parsed locally; RU works too: `настроение 6 сон 7ч`) |
 | *(just type)* any other text | Choose: save as note, thought record, ask Claude, or nothing — nothing is sent to Claude unless you pick it |
