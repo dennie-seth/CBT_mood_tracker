@@ -5,6 +5,7 @@ import asyncio
 import structlog
 from aiogram import Bot, Dispatcher
 
+from app.bot.commands import setup_default_menu
 from app.bot.handlers import register_all
 from app.bot.middlewares.auth import AllowlistMiddleware
 from app.bot.middlewares.context import ContextMiddleware
@@ -81,6 +82,7 @@ async def main() -> None:
     register_all(dp)
 
     log.info("bot_starting", model=settings.anthropic_model)
+    await setup_default_menu(bot)
     scheduler.start()
     try:
         await bot.delete_webhook(drop_pending_updates=False)

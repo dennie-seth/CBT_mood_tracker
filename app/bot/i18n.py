@@ -294,11 +294,70 @@ EN: dict[str, str] = {
         "triggered it, or /activate to ground yourself in a small "
         "concrete action."
     ),
+    # Command menu (Telegram "/" list)
+    "cmd.mood": "Log mood 1-10",
+    "cmd.anxiety": "Log anxiety 1-10",
+    "cmd.migraine": "Migraine attack — start, update or close",
+    "cmd.note": "Write a private note",
+    "cmd.thought": "CBT thought record",
+    "cmd.today": "What I've logged today",
+    "cmd.week": "Last 7 days",
+    "cmd.ask": "Ask Claude about my data",
+    "cmd.log": "Log any metric",
+    "cmd.activate": "Plan a small mood-lifting activity",
+    "cmd.done": "Mark a planned activity done",
+    "cmd.chart": "Chart my metrics",
+    "cmd.migraines": "Migraine summary",
+    "cmd.therapist": "PDF report for my therapist",
+    "cmd.home": "Show or hide shortcut buttons",
+    "cmd.lang": "Language: /lang en or /lang ru",
+    "cmd.help": "All commands and when to use them",
+    "cmd.cancel": "Cancel the current step",
+    # Short metric names (buttons, one-line confirmations)
+    "short.mood": "Mood",
+    "short.energy": "Energy",
+    "short.hunger": "Appetite",
+    "short.anxiety": "Anxiety",
+    "short.stress": "Stress",
+    "short.irritability": "Irritability",
+    "short.focus": "Focus",
+    "short.pain": "Pain",
+    "short.sleep_quality": "Sleep",
+    "short.sleep_hours": "Slept (h)",
+    # Home keyboard
+    "home.note": "📝 Note",
+    "home.migraine": "🤕 Migraine",
+    "home.today": "📅 Today",
+    "home.ask": "💬 Ask",
+    "home.shown": "Shortcuts are below the text field. /home off hides them.",
+    "home.hidden": "Shortcuts hidden. /home brings them back.",
+    "home.ask_question": "What would you like to ask about your data?",
+    # Plain text sent outside a command
+    "plain.offer": "What should I do with this?",
+    "plain.btn.note": "📝 Save as note",
+    "plain.btn.thought": "🧠 Thought record",
+    "plain.btn.ask": "💬 Ask Claude",
+    "plain.btn.nothing": "✖ Nothing",
+    "plain.dismissed": "Okay — not saved.",
+    "plain.expired": "That text isn't available any more — please send it again.",
+    # One-message logging + confirmation buttons
+    "quick.saved": "Logged {items} for {date}.",
+    "entry.btn.undo": "↩ Undo",
+    "entry.btn.note": "📝 Add a note",
+    "entry.btn.thought": "🧠 Thought record",
+    "entry.undone": "Undone — removed.",
+    "entry.undo_failed": "Couldn't undo — it may already be removed.",
+    "entry.note_prompt": "What's behind it? Send a note.",
     # HELP_TEXT — assembled from a single block to keep formatting.
     "help.text": (
         "CBT tracker bot — log your day, ask Claude to analyse it.\n"
         "Each command below is followed by *when* to reach for it.\n\n"
         "📝 Logging\n"
+        "Tip: just type “mood 6 anxiety 7 slept 6.5” to log several at once, "
+        "or send any text and pick what to do with it.\n"
+        "/home — shortcut buttons under the text field (your most-used "
+        "metrics, note, migraine, today, ask). Use to log with one tap; "
+        "/home off hides them.\n"
         "/log — guided pick of any metric. Use when you want to log "
         "something less common (symptoms, focus, irritability) without "
         "remembering a specific command.\n"
@@ -631,10 +690,64 @@ RU: dict[str, str] = {
         "её запустило, либо /activate — чтобы заземлиться через "
         "маленькое конкретное действие."
     ),
+    "cmd.mood": "Записать настроение 1–10",
+    "cmd.anxiety": "Записать тревогу 1–10",
+    "cmd.migraine": "Приступ мигрени — начать, дополнить, закрыть",
+    "cmd.note": "Личная заметка",
+    "cmd.thought": "Запись мысли (КПТ)",
+    "cmd.today": "Что я записала сегодня",
+    "cmd.week": "Последние 7 дней",
+    "cmd.ask": "Спросить Клода о моих данных",
+    "cmd.log": "Записать любую метрику",
+    "cmd.activate": "Запланировать маленькое приятное дело",
+    "cmd.done": "Отметить план выполненным",
+    "cmd.chart": "График моих метрик",
+    "cmd.migraines": "Сводка по мигреням",
+    "cmd.therapist": "PDF-отчёт для терапевта",
+    "cmd.home": "Показать или скрыть кнопки-ярлыки",
+    "cmd.lang": "Язык: /lang en или /lang ru",
+    "cmd.help": "Все команды и когда их использовать",
+    "cmd.cancel": "Отменить текущий шаг",
+    "short.mood": "Настроение",
+    "short.energy": "Энергия",
+    "short.hunger": "Аппетит",
+    "short.anxiety": "Тревога",
+    "short.stress": "Стресс",
+    "short.irritability": "Раздражительность",
+    "short.focus": "Концентрация",
+    "short.pain": "Боль",
+    "short.sleep_quality": "Сон",
+    "short.sleep_hours": "Сон (ч)",
+    "home.note": "📝 Заметка",
+    "home.migraine": "🤕 Мигрень",
+    "home.today": "📅 Сегодня",
+    "home.ask": "💬 Спросить",
+    "home.shown": "Ярлыки — под полем ввода. /home off их скрывает.",
+    "home.hidden": "Ярлыки скрыты. /home вернёт их.",
+    "home.ask_question": "Что ты хочешь узнать о своих данных?",
+    "plain.offer": "Что с этим сделать?",
+    "plain.btn.note": "📝 Сохранить заметку",
+    "plain.btn.thought": "🧠 Запись мысли",
+    "plain.btn.ask": "💬 Спросить Клода",
+    "plain.btn.nothing": "✖ Ничего",
+    "plain.dismissed": "Хорошо — не сохраняю.",
+    "plain.expired": "Этот текст больше недоступен — пришли его ещё раз.",
+    "quick.saved": "Записано: {items} за {date}.",
+    "entry.btn.undo": "↩ Отменить",
+    "entry.btn.note": "📝 Добавить заметку",
+    "entry.btn.thought": "🧠 Запись мысли",
+    "entry.undone": "Отменено — запись удалена.",
+    "entry.undo_failed": "Не получилось отменить — возможно, запись уже удалена.",
+    "entry.note_prompt": "Что за этим стоит? Пришли заметку.",
     "help.text": (
         "Бот для самоотслеживания (КПТ) — записывай день, попроси Клода проанализировать.\n"
         "После каждой команды — *когда* её удобно использовать.\n\n"
         "📝 Записи\n"
+        "Подсказка: просто напиши «настроение 6 тревога 7 спала 6.5», чтобы "
+        "записать сразу несколько, или пришли любой текст и выбери, что с ним сделать.\n"
+        "/home — кнопки-ярлыки под полем ввода (частые метрики, заметка, "
+        "мигрень, сегодня, вопрос). Чтобы записывать в одно касание; "
+        "/home off их скрывает.\n"
         "/log — пошаговый выбор любой метрики. Когда хочешь записать "
         "что-то нечастое (симптомы, концентрация, раздражительность), "
         "не вспоминая конкретную команду.\n"

@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.bot.deps import entry_service
 from app.bot.i18n import t
+from app.bot.keyboards import entry_actions
 from app.bot.states import JournalFlow, ThoughtFlow
 from app.domain.enums import MetricType
 from app.domain.models import User
@@ -29,7 +30,8 @@ async def cmd_note(
         svc = entry_service(session, cipher)
         dto = await svc.create(user, MetricType.NOTE, value_text=command.args.strip())
         await message.answer(
-            t(user.language, "note.saved", date=dto.entry_date.isoformat())
+            t(user.language, "note.saved", date=dto.entry_date.isoformat()),
+            reply_markup=entry_actions(user.language, [dto.id]),
         )
         return
     await state.set_state(JournalFlow.enter_text)
@@ -51,7 +53,8 @@ async def journal_text(
     dto = await svc.create(user, MetricType.NOTE, value_text=message.text.strip())
     await state.clear()
     await message.answer(
-        t(user.language, "note.saved", date=dto.entry_date.isoformat())
+        t(user.language, "note.saved", date=dto.entry_date.isoformat()),
+        reply_markup=entry_actions(user.language, [dto.id]),
     )
 
 

@@ -7,12 +7,15 @@ from app.bot.handlers import (
     ask,
     backfill,
     chart,
+    entry_actions,
     checkins,
     export,
+    home,
     journal,
     lang,
     log,
     migraine,
+    plain,
     quick,
     schedule,
     start,
@@ -24,6 +27,8 @@ from app.bot.handlers import (
 
 def register_all(dp: Dispatcher) -> None:
     dp.include_router(start.router)
+    dp.include_router(home.router)  # before flows: shortcut taps win
+    dp.include_router(entry_actions.router)
     dp.include_router(quick.router)  # quick shortcuts before generic /log
     dp.include_router(log.router)
     dp.include_router(backfill.router)
@@ -39,3 +44,4 @@ def register_all(dp: Dispatcher) -> None:
     dp.include_router(chart.router)
     dp.include_router(export.router)
     dp.include_router(therapist.router)
+    dp.include_router(plain.router)  # last: free text nobody else claimed

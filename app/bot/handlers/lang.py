@@ -5,6 +5,7 @@ from aiogram.filters import Command, CommandObject
 from aiogram.types import Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.bot.commands import set_chat_menu
 from app.bot.i18n import SUPPORTED, t
 from app.domain.models import User
 from app.infrastructure.repositories.user_repo import SqlUserRepository
@@ -28,4 +29,6 @@ async def cmd_lang(
         return
     await SqlUserRepository(session).update_language(user.id, code)
     user.language = code  # so the confirmation goes out in the new language
+    if message.bot is not None:
+        await set_chat_menu(message.bot, message.chat.id, code)
     await message.answer(t(code, "lang.set"))

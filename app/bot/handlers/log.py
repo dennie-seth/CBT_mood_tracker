@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.bot.deps import entry_service
 from app.bot.i18n import metric_label, t
-from app.bot.keyboards import metric_picker, scale_1_to_10
+from app.bot.keyboards import entry_actions, metric_picker, scale_1_to_10
 from app.bot.states import LogFlow
 from app.domain.enums import NUMERIC_METRICS, MetricType
 from app.domain.models import User
@@ -69,7 +69,8 @@ async def numeric_chosen(
             user.language, "log.saved_numeric",
             label=metric_label(metric, user.language),
             value=value, date=dto.entry_date.isoformat(),
-        )
+        ),
+        reply_markup=entry_actions(user.language, [dto.id], [(metric, float(value))]),
     )
     await cb.answer()
 
@@ -101,7 +102,8 @@ async def value_typed(
                 user.language, "log.saved_numeric",
                 label=metric_label(metric, user.language),
                 value=value, date=dto.entry_date.isoformat(),
-            )
+            ),
+            reply_markup=entry_actions(user.language, [dto.id], [(metric, value)]),
         )
         return
 
@@ -112,5 +114,6 @@ async def value_typed(
             user.language, "log.saved_text",
             label=metric_label(metric, user.language),
             date=dto.entry_date.isoformat(),
-        )
+        ),
+        reply_markup=entry_actions(user.language, [dto.id]),
     )
