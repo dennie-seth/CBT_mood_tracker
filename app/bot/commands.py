@@ -19,7 +19,7 @@ log = structlog.get_logger(__name__)
 MENU: tuple[str, ...] = (
     "mood", "anxiety", "day", "migraine", "note", "thought", "today", "week", "ask",
     "recent", "breathe",
-    "log", "activate", "done", "chart", "migraines", "therapist",
+    "log", "activate", "done", "chart", "pixels", "migraines", "therapist",
     "hide", "pause", "home", "lang", "help", "cancel",
 )
 

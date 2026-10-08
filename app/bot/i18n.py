@@ -416,6 +416,14 @@ EN: dict[str, str] = {
     "ground.btn.next": "Done ✓",
     "ground.done": "You're here, now. Take one slow breath.",
     "cmd.breathe": "Breathing or grounding exercise",
+    # Reflection
+    "pixels.caption": "Mood {year} · {days} days with a mood logged · {migraines} migraine days",
+    "pixels.bad_year": "Use /pixels or /pixels {year} (a year you've logged in).",
+    "export.csv_caption": (
+        "All your entries, decrypted, as CSV (opens in Excel / Google Sheets). "
+        "This file is unencrypted — keep it somewhere private."
+    ),
+    "cmd.pixels": "My year in pixels (mood calendar)",
     # Command menu (Telegram "/" list)
     "cmd.mood": "Log mood 1-10",
     "cmd.anxiety": "Log anxiety 1-10",
@@ -523,6 +531,10 @@ EN: dict[str, str] = {
         "Use when you want to spot trends visually.\n"
         "/export — generate a multi-page PDF report (numeric only). "
         "Use for a private numeric snapshot or a personal archive.\n"
+        "/pixels [year] — your year as a mood calendar, migraine days marked. "
+        "Use to see seasons and streaks at a glance.\n"
+        "/export csv [7d|30d|90d|all] — all your entries, decrypted, as a CSV "
+        "file. Use for a backup or to move your data elsewhere.\n"
         "/therapist — richer PDF including thought records, BA outcomes, "
         "notes and other free-text. Use to share with a clinician — "
         "marked confidential, share only with people you trust.\n\n"
@@ -942,6 +954,13 @@ RU: dict[str, str] = {
     "ground.btn.next": "Готово ✓",
     "ground.done": "Ты здесь и сейчас. Сделай один медленный вдох.",
     "cmd.breathe": "Дыхание или заземление",
+    "pixels.caption": "Настроение {year} · дней с оценкой настроения: {days} · дней с мигренью: {migraines}",
+    "pixels.bad_year": "Используй /pixels или /pixels {year} (год, за который есть записи).",
+    "export.csv_caption": (
+        "Все твои записи, расшифрованные, в CSV (открывается в Excel / Google Таблицах). "
+        "Файл не зашифрован — храни его в надёжном месте."
+    ),
+    "cmd.pixels": "Мой год в пикселях (календарь настроения)",
     "cmd.mood": "Записать настроение 1–10",
     "cmd.anxiety": "Записать тревогу 1–10",
     "cmd.migraine": "Приступ мигрени — начать, дополнить, закрыть",
@@ -1043,6 +1062,10 @@ RU: dict[str, str] = {
         "Чтобы заметить тренды визуально.\n"
         "/export — многостраничный PDF-отчёт (только числа). "
         "Для личного снимка состояния или архива.\n"
+        "/pixels [год] — твой год как календарь настроения, дни мигрени отмечены. "
+        "Чтобы увидеть сезоны и полосы с первого взгляда.\n"
+        "/export csv [7d|30d|90d|all] — все записи, расшифрованные, в CSV. "
+        "Для резервной копии или чтобы перенести данные.\n"
         "/therapist — расширенный PDF: записи мыслей, итоги активации, "
         "заметки и тренды. Для отправки клиницисту — помечен "
         "конфиденциальным, делись только с теми, кому доверяешь.\n\n"
