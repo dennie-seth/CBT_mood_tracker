@@ -34,3 +34,8 @@ def test_prompt_mentions_migraine_stats_tool_and_medication_guidance() -> None:
     lower = SYSTEM_PROMPT.lower()
     assert "doctor" in lower
     assert "dosing" in lower  # never give dosing advice
+
+
+def test_prompt_explains_activation_ratings() -> None:
+    assert "predicted_effect" in SYSTEM_PROMPT and "actual_effect" in SYSTEM_PROMPT
+    assert "not a mood value" in SYSTEM_PROMPT.lower()
