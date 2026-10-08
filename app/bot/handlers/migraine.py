@@ -95,13 +95,21 @@ async def cmd_migraine(
     session: AsyncSession, cipher: FernetCipher,
 ) -> None:
     await state.clear()
-    open_attacks = await _svc(session, cipher).list_open(
-        user.id, today=today_in_tz(user.timezone)
-    )
+    svc = _svc(session, cipher)
+    today = today_in_tz(user.timezone)
+    open_attacks = await svc.list_open(user.id, today=today)
     if not open_attacks:
-        await message.answer(
-            t(user.language, "migraine.ask_intensity"), reply_markup=card.scale("new", 0)
-        )
+        kb = card.scale("new", 0)
+        last = await svc.latest(user.id, today=today)
+        if last is not None:
+            kb = InlineKeyboardMarkup(inline_keyboard=[
+                *kb.inline_keyboard,
+                [InlineKeyboardButton(
+                    text=t(user.language, "migraine.btn.edit_last"),
+                    callback_data=card.cb("card", last.id),
+                )],
+            ])
+        await message.answer(t(user.language, "migraine.ask_intensity"), reply_markup=kb)
         return
     for n, attack in enumerate(open_attacks):
         text, kb = _render(attack, user)

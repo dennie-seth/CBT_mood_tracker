@@ -419,3 +419,16 @@ async def test_migraines_summary_bad_period(d) -> None:
     m = _msg("/migraines")
     await h.cmd_migraines(m, MagicMock(args="lots"), d.user, None, d.cipher)
     assert "7d" in _text(m)
+
+
+async def test_edit_last_attack_offered_when_nothing_open(d) -> None:
+    m = await d.command()
+    assert not any(b.startswith("mg:card:") for b in _buttons(m))  # nothing yet
+
+    i = await d.new_attack()
+    await d.tap(f"mg:forgot:{i}")
+    m = await d.command()
+    assert "How strong" in _text(m)
+    assert f"mg:card:{i}" in _buttons(m)
+    c = await d.tap(f"mg:card:{i}")
+    assert f"mg:endtime:{i}" in _buttons(c)
