@@ -84,6 +84,54 @@ EN: dict[str, str] = {
     "skip.pick": "Which one are you skipping?",
     "skip.ask_reason": "One-line reason? (or send /cancel to skip without one)",
     "skip.saved": "Skipped. No judgement — sometimes the planning itself is the work.",
+    # /migraine
+    "migraine.ongoing": "You have an attack logged since {start}. Is it over now?",
+    "migraine.btn_over": "It's over",
+    "migraine.btn_new": "Log a new attack",
+    "migraine.ask_start": (
+        "Sorry you're dealing with this. When did it start? "
+        "Tap below or type a time like 14:30."
+    ),
+    "migraine.btn_now": "Now",
+    "migraine.btn_ago": "{h}h ago",
+    "migraine.bad_time": "Couldn't read that — type a time like 14:30, or tap a button.",
+    "migraine.ask_intensity": "How strong is it right now? (1-10)",
+    "migraine.ask_aura": "Did you have an aura (visual or other warning signs)?",
+    "migraine.btn_yes": "Yes",
+    "migraine.btn_no": "No",
+    "migraine.ask_symptoms": "Anything else with it? Tap all that apply, then Done.",
+    "migraine.sym.nausea": "Nausea",
+    "migraine.sym.light": "Light sensitivity",
+    "migraine.sym.sound": "Sound sensitivity",
+    "migraine.sym.one_sided": "One-sided pain",
+    "migraine.btn_done": "Done",
+    "migraine.ask_med": (
+        "Did you take anything for it? Type what and how much, or tap Nothing."
+    ),
+    "migraine.btn_nothing": "Nothing",
+    "migraine.ask_trigger": (
+        "Any idea what might have triggered it? A few words, or tap Skip."
+    ),
+    "migraine.btn_skip": "Skip",
+    "migraine.saved_ongoing": (
+        "Saved (started {start}, intensity {intensity}/10). Is it still going?"
+    ),
+    "migraine.btn_still": "Still going",
+    "migraine.still_going": (
+        "Okay. Tap the button when it's over, or send /migraine again. "
+        "Take care of yourself."
+    ),
+    "migraine.ask_end": "When did it end? Tap below or type a time like 18:45.",
+    "migraine.end_before_start": "That's before it started ({start}). Try another time.",
+    "migraine.ask_peak": "How bad did it get at its worst? (1-10)",
+    "migraine.ask_end_med": (
+        "Did you take anything during the attack? Type what and how much, "
+        "or tap Nothing."
+    ),
+    "migraine.ask_relief": "How much did it help? (1 = not at all, 10 = completely)",
+    "migraine.saved_ended": "Logged: {duration}, peak {peak}/10. Rest well.",
+    "migraine.duration": "{h}h {m}m",
+    "migraine.failed": "Couldn't save that: {err}",
     "skip.failed": "Couldn't skip: {err}",
     # /today, /week
     "today.empty": "No entries today.",
@@ -180,7 +228,11 @@ EN: dict[str, str] = {
         "thought → distortion → reframe). Use when you catch a strong "
         "negative thought and want to work through it.\n"
         "/backfill <date> <metric> <value> — log for a past date. "
-        "Use when you forgot to log yesterday or want to add an old entry.\n\n"
+        "Use when you forgot to log yesterday or want to add an old entry.\n"
+        "/migraine — log a migraine attack step by step (start time, "
+        "intensity, aura, symptoms, medication, trigger), then tap "
+        "\"It's over\" to record duration, peak and relief. Use when an "
+        "attack starts — or afterwards to log one that already passed.\n\n"
         "🌱 Behavioral activation\n"
         "/activate — plan a small mood-lifting activity and predict its "
         "lift. Use when you feel low and want a concrete step out of it.\n"
@@ -288,6 +340,53 @@ RU: dict[str, str] = {
     "skip.pick": "Какой план пропускаем?",
     "skip.ask_reason": "Причина одной строкой? (или /cancel, чтобы пропустить без причины)",
     "skip.saved": "Пропущено. Без осуждения — иногда сама попытка спланировать уже работа.",
+    "migraine.ongoing": "У тебя записан приступ с {start}. Он уже прошёл?",
+    "migraine.btn_over": "Прошёл",
+    "migraine.btn_new": "Новый приступ",
+    "migraine.ask_start": (
+        "Сочувствую. Когда он начался? "
+        "Нажми кнопку или напиши время, например 14:30."
+    ),
+    "migraine.btn_now": "Сейчас",
+    "migraine.btn_ago": "{h} ч назад",
+    "migraine.bad_time": "Не получилось разобрать — напиши время вроде 14:30 или нажми кнопку.",
+    "migraine.ask_intensity": "Насколько сильно болит сейчас? (1–10)",
+    "migraine.ask_aura": "Была аура (зрительные или другие предвестники)?",
+    "migraine.btn_yes": "Да",
+    "migraine.btn_no": "Нет",
+    "migraine.ask_symptoms": "Что-то ещё сопровождает? Отметь всё подходящее и нажми «Готово».",
+    "migraine.sym.nausea": "Тошнота",
+    "migraine.sym.light": "Светобоязнь",
+    "migraine.sym.sound": "Звукобоязнь",
+    "migraine.sym.one_sided": "Боль с одной стороны",
+    "migraine.btn_done": "Готово",
+    "migraine.ask_med": (
+        "Ты что-нибудь приняла? Напиши что и сколько, или нажми «Ничего»."
+    ),
+    "migraine.btn_nothing": "Ничего",
+    "migraine.ask_trigger": (
+        "Есть догадки, что могло спровоцировать? Пара слов — или «Пропустить»."
+    ),
+    "migraine.btn_skip": "Пропустить",
+    "migraine.saved_ongoing": (
+        "Сохранено (начало {start}, сила {intensity}/10). Приступ ещё идёт?"
+    ),
+    "migraine.btn_still": "Ещё идёт",
+    "migraine.still_going": (
+        "Хорошо. Нажми кнопку, когда пройдёт, или снова отправь /migraine. "
+        "Береги себя."
+    ),
+    "migraine.ask_end": "Когда закончился? Нажми кнопку или напиши время, например 18:45.",
+    "migraine.end_before_start": "Это раньше начала ({start}). Попробуй другое время.",
+    "migraine.ask_peak": "Насколько сильно было в самый тяжёлый момент? (1–10)",
+    "migraine.ask_end_med": (
+        "Ты что-нибудь принимала во время приступа? Напиши что и сколько, "
+        "или нажми «Ничего»."
+    ),
+    "migraine.ask_relief": "Насколько это помогло? (1 — совсем нет, 10 — полностью)",
+    "migraine.saved_ended": "Записано: {duration}, пик {peak}/10. Отдыхай.",
+    "migraine.duration": "{h} ч {m} мин",
+    "migraine.failed": "Не получилось сохранить: {err}",
     "skip.failed": "Не получилось пропустить: {err}",
     "today.empty": "Сегодня записей нет.",
     "today.header": "Сегодня:",
@@ -376,7 +475,11 @@ RU: dict[str, str] = {
         "мысль → искажение → переформулировка). Когда поймала сильную "
         "негативную мысль и хочешь её разобрать.\n"
         "/backfill <дата> <метрика> <значение> — запись задним числом. "
-        "Если забыла записать вчера или хочешь добавить старую запись.\n\n"
+        "Если забыла записать вчера или хочешь добавить старую запись.\n"
+        "/migraine — пошаговая запись приступа мигрени (начало, сила, "
+        "аура, симптомы, лекарство, триггер), потом кнопка «Прошёл» — "
+        "длительность, пик и насколько помогло лекарство. Когда приступ "
+        "начался — или уже после, чтобы записать прошедший.\n\n"
         "🌱 Поведенческая активация\n"
         "/activate — запланировать маленькое действие и спрогнозировать "
         "его эффект. Когда настроение низкое и нужен конкретный шаг.\n"
@@ -434,6 +537,7 @@ _METRIC_LABELS_RU: dict[str, str] = {
     "irritability": "Раздражительность (1–10)",
     "focus": "Концентрация (1–10)",
     "pain": "Боль (1–10)",
+    "migraine": "Мигрень, пик (1–10)",
     "symptom": "Телесный симптом",
     "thought_record": "Запись мысли",
     "activity": "Активность",

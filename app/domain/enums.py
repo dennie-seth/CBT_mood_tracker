@@ -15,6 +15,9 @@ class MetricType(StrEnum):
     IRRITABILITY = "irritability"
     FOCUS = "focus"
     PAIN = "pain"
+    # Peak intensity of a migraine attack; episode details live in `extra`
+    # (see MigraineService).
+    MIGRAINE = "migraine"
 
     # Qualitative (free text, encrypted)
     SYMPTOM = "symptom"
@@ -39,6 +42,7 @@ NUMERIC_METRICS: frozenset[MetricType] = frozenset(
         MetricType.IRRITABILITY,
         MetricType.FOCUS,
         MetricType.PAIN,
+        MetricType.MIGRAINE,
     }
 )
 
@@ -67,6 +71,7 @@ METRIC_LABELS: dict[MetricType, str] = {
     MetricType.IRRITABILITY: "Irritability (1-10)",
     MetricType.FOCUS: "Focus (1-10)",
     MetricType.PAIN: "Body pain (1-10)",
+    MetricType.MIGRAINE: "Migraine peak (1-10)",
     MetricType.SYMPTOM: "Body symptom",
     MetricType.THOUGHT_RECORD: "Thought record",
     MetricType.ACTIVITY: "Activity",
@@ -114,6 +119,11 @@ METRIC_SEMANTICS: dict[MetricType, str] = {
     ),
     MetricType.PAIN: (
         "Higher is worse. 0-1 = none, 2-4 = mild, 5-7 = moderate, 8-10 = severe."
+    ),
+    MetricType.MIGRAINE: (
+        "Peak intensity of a migraine attack. Higher is worse. 1-3 = mild, "
+        "4-6 = moderate, 7-10 = severe/disabling. Logged only when an attack "
+        "happens: a day with no entry means no attack logged, not a zero."
     ),
 }
 

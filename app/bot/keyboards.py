@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
+from app.bot.i18n import t
 from app.domain.enums import METRIC_LABELS, NUMERIC_METRICS, TEXT_METRICS, MetricType
+from app.services.migraine_service import SYMPTOMS
 
 
 def scale_1_to_10(callback_prefix: str) -> InlineKeyboardMarkup:
@@ -93,3 +95,81 @@ def period_picker(callback_prefix: str) -> InlineKeyboardMarkup:
             ]
         ]
     )
+
+
+# --- /migraine ------------------------------------------------------------
+# Labels are localized here (unlike the older pickers above) because these
+# buttons carry whole words, not numbers.
+
+MIGRAINE_HOURS_AGO: tuple[int, ...] = (1, 2, 4, 8)
+
+
+def migraine_time_picker(lang: str, callback_prefix: str) -> InlineKeyboardMarkup:
+    """Now / 1h / 2h / 4h / 8h ago. Callback data carries minutes ago."""
+    ago = [
+        InlineKeyboardButton(
+            text=t(lang, "migraine.btn_ago", h=h),
+            callback_data=f"{callback_prefix}:{h * 60}",
+        )
+        for h in MIGRAINE_HOURS_AGO
+    ]
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text=t(lang, "migraine.btn_now"), callback_data=f"{callback_prefix}:0")],
+            ago,
+        ]
+    )
+
+
+def migraine_yes_no(lang: str, callback_prefix: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text=t(lang, "migraine.btn_yes"), callback_data=f"{callback_prefix}:1"),
+                InlineKeyboardButton(text=t(lang, "migraine.btn_no"), callback_data=f"{callback_prefix}:0"),
+            ]
+        ]
+    )
+
+
+def migraine_symptoms(lang: str, selected: list[str]) -> InlineKeyboardMarkup:
+    """Toggle buttons, one per symptom (✅ when selected), plus Done."""
+    rows = [
+        [
+            InlineKeyboardButton(
+                text=("✅ " if key in selected else "") + t(lang, f"migraine.sym.{key}"),
+                callback_data=f"mg_sym:{key}",
+            )
+        ]
+        for key in SYMPTOMS
+    ]
+    rows.append(
+        [InlineKeyboardButton(text=t(lang, "migraine.btn_done"), callback_data="mg_sym:done")]
+    )
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def migraine_single(lang: str, label_key: str, callback_data: str) -> InlineKeyboardMarkup:
+    """One button — 'Nothing' / 'Skip' under a free-text question."""
+    return InlineKeyboardMarkup(
+        inline_keyboard=[[InlineKeyboardButton(text=t(lang, label_key), callback_data=callback_data)]]
+    )
+
+
+def migraine_after_start(lang: str, entry_id: int) -> InlineKeyboardMarkup:
+    """'Still going' / 'It's over' right after an attack is saved."""
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text=t(lang, "migraine.btn_still"), callback_data=f"mg_still:{entry_id}"),
+                InlineKeyboardButton(text=t(lang, "migraine.btn_over"), callback_data=f"mg_end:{entry_id}"),
+            ]
+        ]
+    )
+
+
+def migraine_over_button(lang: str, entry_id: int, *, offer_new: bool = False) -> InlineKeyboardMarkup:
+    row = [InlineKeyboardButton(text=t(lang, "migraine.btn_over"), callback_data=f"mg_end:{entry_id}")]
+    if offer_new:
+        row.append(InlineKeyboardButton(text=t(lang, "migraine.btn_new"), callback_data="mg_new"))
+    return InlineKeyboardMarkup(inline_keyboard=[row])
