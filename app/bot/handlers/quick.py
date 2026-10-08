@@ -80,7 +80,8 @@ async def quick_value_chosen(
         reply_markup=entry_actions(user.language, [dto.id], [(metric, float(value))]),
     )
     await cb.answer()
-    await offer_support(cb.message, user, svc, [(metric, float(value))])
+    if isinstance(cb.message, Message):
+        await offer_support(cb.message, user, svc, [(metric, float(value))])
 
 
 @router.message(QuickFlow.pick_value)
