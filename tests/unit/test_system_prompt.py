@@ -86,3 +86,7 @@ def test_prompt_has_crisis_guidance() -> None:
     lower = SYSTEM_PROMPT.lower()
     assert "harm" in lower
     assert "emergency" in lower or "crisis line" in lower
+
+
+def test_prompt_rules_hold_under_pressure() -> None:
+    assert "hold for the whole conversation" in SYSTEM_PROMPT.lower()

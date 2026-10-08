@@ -97,3 +97,51 @@ async def test_iteration_limit_message_is_localized(lang, needle) -> None:
 def test_dispatcher_type_still_matches() -> None:
     # Guard: the fake mirrors the real dispatcher's surface we rely on.
     assert hasattr(ToolDispatcher, "call")
+
+
+# --- Haiku 5.5 readiness -----------------------------------------------------
+
+async def test_effort_sent_only_when_configured() -> None:
+    svc, messages = _service([_text("ok")])
+    await svc.answer("q", _FakeDispatcher(), date(2026, 10, 8), now=NOW)  # type: ignore[arg-type]
+    assert "output_config" not in messages.calls[0]  # Haiku 4.5 rejects effort
+
+    svc, messages = _service([_text("ok")], effort="low")
+    await svc.answer("q", _FakeDispatcher(), date(2026, 10, 8), now=NOW)  # type: ignore[arg-type]
+    assert messages.calls[0]["output_config"] == {"effort": "low"}
+
+
+async def test_max_tokens_leaves_room_for_thinking() -> None:
+    svc, messages = _service([_text("ok")])
+    await svc.answer("q", _FakeDispatcher(), date(2026, 10, 8), now=NOW)  # type: ignore[arg-type]
+    assert messages.calls[0]["max_tokens"] >= 8000
+
+
+async def test_thinking_blocks_are_ignored_in_the_reply_and_kept_in_history() -> None:
+    thinking = SimpleNamespace(type="thinking", thinking="", signature="sig")
+    first = SimpleNamespace(
+        stop_reason="tool_use",
+        content=[thinking, *_tool_call().content],
+    )
+    final = SimpleNamespace(
+        stop_reason="end_turn",
+        content=[SimpleNamespace(type="thinking", thinking="", signature="s2"),
+                 SimpleNamespace(type="text", text="answer")],
+    )
+    svc, messages = _service([first, final])
+    out = await svc.answer("q", _FakeDispatcher(), date(2026, 10, 8), now=NOW)  # type: ignore[arg-type]
+    assert out.text == "answer"
+    # The assistant turn is resent unmodified (thinking block included).
+    assert messages.calls[1]["messages"][1]["content"][0] is thinking
+
+
+@pytest.mark.parametrize("lang,needle", [("en", "couldn't answer"), ("ru", "не получилось")])
+async def test_refusal_gets_a_gentle_localized_reply(lang, needle) -> None:
+    refusal = SimpleNamespace(
+        stop_reason="refusal", content=[],
+        stop_details=SimpleNamespace(category="general_harms"),
+    )
+    svc, _ = _service([refusal])
+    out = await svc.answer("q", _FakeDispatcher(), date(2026, 10, 8),  # type: ignore[arg-type]
+                           target_language=lang, now=NOW)
+    assert needle in out.text.lower()

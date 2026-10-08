@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from datetime import date, datetime
+from typing import Any
 
 import pytz
 import structlog
@@ -19,6 +20,11 @@ _LANGUAGE_LINE = {
         "Reply in Russian. Address the user informally (ты) and use feminine "
         "grammatical forms for her (e.g. «ты спала», «ты отметила»)."
     ),
+}
+_MAX_TOKENS = 8000
+_REFUSED = {
+    "en": "Sorry, I couldn't answer that one. Could you rephrase the question?",
+    "ru": "Прости, на это у меня не получилось ответить. Попробуешь переформулировать?",
 }
 _TOO_LONG = {
     "en": "That took too long to work out — could you ask a narrower question?",
@@ -44,10 +50,14 @@ class AiService:
         client: AsyncAnthropic,
         model: str,
         max_iterations: int = 8,
+        effort: str | None = None,
     ) -> None:
         self._client = client
         self._model = model
         self._max_iterations = max_iterations
+        # Only sent when configured: Claude Haiku 4.5 rejects `effort`;
+        # Claude Haiku 5.5 defaults to "medium" when it's omitted.
+        self._effort = effort
 
     async def answer(
         self,
@@ -70,10 +80,16 @@ class AiService:
         )
         messages: list[dict] = [{"role": "user", "content": user_message}]
 
+        extra: dict[str, Any] = {}
+        if self._effort:
+            extra["output_config"] = {"effort": self._effort}
+
         for _ in range(self._max_iterations):
             response = await self._client.messages.create(
                 model=self._model,
-                max_tokens=2048,
+                # Room for adaptive thinking (on by default on Claude Haiku 5.5,
+                # and counted against max_tokens) plus a short chat reply.
+                max_tokens=_MAX_TOKENS,
                 system=SYSTEM_PROMPT,
                 tools=TOOL_SCHEMAS,
                 messages=messages,
@@ -81,7 +97,16 @@ class AiService:
                 # loop resends the growing history, so cache the prefix. (A
                 # silent no-op while it's under the model's minimum length.)
                 cache_control={"type": "ephemeral"},
+                **extra,
             )
+
+            if response.stop_reason == "refusal":
+                details = getattr(response, "stop_details", None)
+                log.warning("ai_refusal", category=getattr(details, "category", None))
+                return AiAnswer(
+                    text=_REFUSED.get(target_language, _REFUSED["en"]),
+                    artifacts=dispatcher.artifacts,
+                )
 
             if response.stop_reason == "tool_use":
                 tool_uses = [b for b in response.content if b.type == "tool_use"]

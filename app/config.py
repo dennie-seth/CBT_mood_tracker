@@ -23,6 +23,9 @@ class Settings(BaseSettings):
         default="claude-haiku-4-5-20251001", alias="ANTHROPIC_MODEL"
     )
     ai_max_tool_iterations: int = Field(default=8, alias="AI_MAX_TOOL_ITERATIONS")
+    # Claude Haiku 5.5+ only (Haiku 4.5 rejects it): low | medium | high.
+    # Empty = the model's default.
+    anthropic_effort: str | None = Field(default=None, alias="ANTHROPIC_EFFORT")
 
     # NoDecode: pydantic-settings would otherwise try to JSON-decode the env value
     # before our validator runs. We want raw CSV strings.
