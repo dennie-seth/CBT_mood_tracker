@@ -59,7 +59,9 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
         "name": "daily_summary",
         "description": (
             "Compute per-day averages of numeric metrics over a date range. "
-            "Returns an array of {date, metrics: {metric_type: avg_value}}."
+            "Returns days: [{date, weekday, metrics: {metric_type: avg_value}}] and "
+            "days_without_data: [{date, weekday}] for days in the range with no "
+            "numeric entry (nothing logged — not a zero)."
         ),
         "input_schema": {
             "type": "object",
@@ -74,7 +76,9 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
         "name": "migraine_stats",
         "description": (
             "Exact migraine summary for a date range: number of attacks, "
-            "headache days, typical and longest duration, average/max peak, "
+            "headache days, typical and longest duration (over "
+            "attacks_with_known_duration only — attacks with no recorded end have "
+            "no duration), average/max peak, "
             "aura count, symptom and trigger counts (most common first), "
             "medications with how often each was used and average relief, and "
             "medication_days_last_30 (days with acute medication logged in the "
@@ -198,9 +202,12 @@ class ToolDispatcher:
         start = date.fromisoformat(args["start_date"])
         end = date.fromisoformat(args["end_date"])
         df = await self.analysis_service.daily_summary(self.user_id, start, end)
+        logged = set() if df.empty else {idx.date() for idx in df.index}
+        missing = _days_without_data(start, end, logged)
         if df.empty:
-            return {"days": [], "note": "No data in range."}
+            return {"days": [], "note": "No data in range.", **missing}
         return {
+            **missing,
             "days": [
                 {
                     "date": idx.date().isoformat(),
@@ -251,6 +258,20 @@ class ToolDispatcher:
         fname = f"report_{start.isoformat()}_{end.isoformat()}.pdf"
         self.artifacts.append(ToolArtifact("application/pdf", fname, pdf))
         return {"artifact": fname, "ok": True}
+
+
+_MAX_LISTED_EMPTY_DAYS = 92
+
+
+def _days_without_data(start: date, end: date, logged: set[date]) -> dict[str, Any]:
+    """Empty days with their weekday, so the model never has to compute one.
+    Long ranges get a count instead of a list."""
+    span = (end - start).days + 1
+    empty = [start + timedelta(days=i) for i in range(max(span, 0))
+             if start + timedelta(days=i) not in logged]
+    if span > _MAX_LISTED_EMPTY_DAYS:
+        return {"days_without_data_count": len(empty)}
+    return {"days_without_data": [{"date": d.isoformat(), "weekday": _weekday(d)} for d in empty]}
 
 
 _WEEKDAYS = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
