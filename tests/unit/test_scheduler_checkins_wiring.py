@@ -80,3 +80,24 @@ async def test_probe_skipped_for_revoked_user(schedule_sm) -> None:
     )
     await scheduler.dispatch_due(pytz.utc.localize(datetime(2026, 5, 4, 12, 0)))
     assert probe.await_count == 0
+
+
+async def test_migraine_reminder_runs_for_every_allowed_user(schedule_sm) -> None:
+    """Reminders aren't tied to schedule prefs: any allow-listed user with an
+    open attack may need one. Revoked users are skipped."""
+    await _seed_user(schedule_sm, id=1, telegram_id=111, tz="UTC")  # no prefs at all
+    await _seed_user(schedule_sm, id=2, telegram_id=222, tz="UTC")  # revoked
+
+    reminder = AsyncMock()
+    scheduler = SummaryScheduler(
+        sessionmaker=schedule_sm,
+        delivery=AsyncMock(),
+        allowed_telegram_ids=frozenset({111}),
+        migraine_reminder=reminder,
+    )
+    now_utc = pytz.utc.localize(datetime(2026, 5, 4, 12, 0))
+    await scheduler.dispatch_due(now_utc)
+
+    assert reminder.await_count == 1
+    assert reminder.call_args.kwargs["user"].telegram_id == 111
+    assert reminder.call_args.kwargs["now_utc"] == now_utc

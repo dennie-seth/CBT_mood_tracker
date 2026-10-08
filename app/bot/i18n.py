@@ -84,54 +84,139 @@ EN: dict[str, str] = {
     "skip.pick": "Which one are you skipping?",
     "skip.ask_reason": "One-line reason? (or send /cancel to skip without one)",
     "skip.saved": "Skipped. No judgement — sometimes the planning itself is the work.",
-    # /migraine
-    "migraine.ongoing": "You have an attack logged since {start}. Is it over now?",
-    "migraine.btn_over": "It's over",
-    "migraine.btn_new": "Log a new attack",
-    "migraine.ask_start": (
-        "Sorry you're dealing with this. When did it start? "
-        "Tap below or type a time like 14:30."
+    # /migraine — attack card
+    "migraines.header": "Migraines, {start} → {end}",
+    "migraines.empty": "No migraine attacks logged between {start} and {end}.",
+    "migraines.bad_period": "Use /migraines 7d, 30d, 90d or all.",
+    "migraines.attacks": "Attacks: {n} · headache days: {days}",
+    "migraines.open": " ({n} still open)",
+    "migraines.duration": "Typical length: {avg} (longest {longest})",
+    "migraines.peak": "Average worst: {avg}/10 (max {max}/10)",
+    "migraines.aura": "Aura: in {n} of {total}",
+    "migraines.symptoms": "Common symptoms: {items}",
+    "migraines.triggers": "Possible triggers: {items}",
+    "migraines.meds_header": "Medication:",
+    "migraines.med_line": "• {name} — {n}×",
+    "migraines.med_relief": " · helped {relief}/10 on average",
+    "migraines.med_days": "Acute medication logged on {n} of the last 30 days.",
+    "migraines.med_flag": (
+        "Taking acute medication this often can itself make headaches more "
+        "frequent — it's worth mentioning to your doctor."
     ),
-    "migraine.btn_now": "Now",
-    "migraine.btn_ago": "{h}h ago",
-    "migraine.bad_time": "Couldn't read that — type a time like 14:30, or tap a button.",
-    "migraine.ask_intensity": "How strong is it right now? (1-10)",
+    "migraine.label": "Migraine",
+    "migraine.reminder": (
+        "Checking in gently — is this attack still going? "
+        "If it's over, tap “It's over”."
+    ),
+    "migraine.btn.mute": "🔕 Don't remind me",
+    "migraine.ask_intensity": (
+        "Sorry you're dealing with this. How strong is it right now? (1-10)\n"
+        "It's saved as starting now — you can change the start time after."
+    ),
+    "migraine.ask_start": (
+        "When did it start? Tap, or type a time: 14:30, yesterday 22:00, 06.10 18:30."
+    ),
+    "migraine.ask_end": (
+        "When did it end? Tap, or type a time: 18:45, yesterday 23:10, 06.10 07:30."
+    ),
+    "migraine.bad_time": (
+        "Couldn't read that. Try 14:30, yesterday 22:00 or 06.10 18:30 — "
+        "or tap a button above."
+    ),
+    "migraine.ask_peak": "How bad is it at its worst so far? (1-10)",
+    "migraine.ask_peak_end": "How bad did it get at its worst? (1-10)",
     "migraine.ask_aura": "Did you have an aura (visual or other warning signs)?",
-    "migraine.btn_yes": "Yes",
-    "migraine.btn_no": "No",
     "migraine.ask_symptoms": "Anything else with it? Tap all that apply, then Done.",
+    "migraine.ask_triggers": (
+        "What might have played a part? Tap all that apply, or write your own. "
+        "A guess is fine."
+    ),
+    "migraine.ask_trigger_text": "Write it in a few words:",
+    "migraine.ask_med": "What did you take? Tap a recent one, or type what and how much.",
+    "migraine.ask_end_med": (
+        "Did you take anything for it? Tap a recent one, type what and how much, "
+        "or tap “Didn't take anything”."
+    ),
+    "migraine.ask_relief": "How much did it help? (1 = not at all, 10 = completely)",
+    "migraine.ask_delete": "Delete this attack? This can't be undone.",
+    "migraine.deleted": "Deleted.",
+    "migraine.saved_note": "✓ Saved",
+    "migraine.stale_button": "That button is from an earlier step — use the latest message.",
     "migraine.sym.nausea": "Nausea",
     "migraine.sym.light": "Light sensitivity",
     "migraine.sym.sound": "Sound sensitivity",
     "migraine.sym.one_sided": "One-sided pain",
-    "migraine.btn_done": "Done",
-    "migraine.ask_med": (
-        "Did you take anything for it? Type what and how much, or tap Nothing."
-    ),
-    "migraine.btn_nothing": "Nothing",
-    "migraine.ask_trigger": (
-        "Any idea what might have triggered it? A few words, or tap Skip."
-    ),
-    "migraine.btn_skip": "Skip",
-    "migraine.saved_ongoing": (
-        "Saved (started {start}, intensity {intensity}/10). Is it still going?"
-    ),
-    "migraine.btn_still": "Still going",
-    "migraine.still_going": (
-        "Okay. Tap the button when it's over, or send /migraine again. "
-        "Take care of yourself."
-    ),
-    "migraine.ask_end": "When did it end? Tap below or type a time like 18:45.",
-    "migraine.end_before_start": "That's before it started ({start}). Try another time.",
-    "migraine.ask_peak": "How bad did it get at its worst? (1-10)",
-    "migraine.ask_end_med": (
-        "Did you take anything during the attack? Type what and how much, "
-        "or tap Nothing."
-    ),
-    "migraine.ask_relief": "How much did it help? (1 = not at all, 10 = completely)",
-    "migraine.saved_ended": "Logged: {duration}, peak {peak}/10. Rest well.",
+    "migraine.trg.sleep": "Poor sleep",
+    "migraine.trg.stress": "Stress",
+    "migraine.trg.skipped_meal": "Skipped meal",
+    "migraine.trg.dehydration": "Not enough water",
+    "migraine.trg.alcohol": "Alcohol",
+    "migraine.trg.screens": "Screens",
+    "migraine.trg.weather": "Weather",
+    "migraine.trg.cycle": "Menstrual cycle",
+    "migraine.card.title_open": "🤕 Migraine — ongoing",
+    "migraine.card.title_ended": "Migraine — ended",
+    "migraine.card.started_ago": "Started: {when} ({ago} ago)",
+    "migraine.card.started": "Started: {when}",
+    "migraine.card.ended": "Ended: {when} · lasted {duration}",
+    "migraine.card.ended_unknown": "Ended: time not recorded",
+    "migraine.card.intensity": "Intensity: {start}/10 at start · worst {peak}/10",
+    "migraine.card.aura": "Aura: {value}",
+    "migraine.card.symptoms": "Symptoms: {value}",
+    "migraine.card.triggers": "Possible triggers: {value}",
+    "migraine.card.medication": "Medication: {value}",
+    "migraine.card.relief": " · helped {relief}/10",
+    "migraine.card.none": "—",
+    "migraine.card.yes": "yes",
+    "migraine.card.no": "no",
+    "migraine.card.stale": "⚠️ Open for {duration}. Did you forget to close it?",
+    "migraine.card.closed_footer": "Rest well. You can still change anything below.",
+    "migraine.when.yesterday": "yesterday {time}",
+    "migraine.summary": "{span} ({duration}), peak {peak}",
+    "migraine.summary_open": "since {start}, ongoing, peak so far {peak}",
+    "migraine.summary_unknown_end": "from {start}, end not recorded, peak {peak}",
+    "migraine.summary_med": "; {med}",
+    "migraine.summary_relief": " → helped {relief}/10",
+    "migraine.duration_min": "{m}m",
     "migraine.duration": "{h}h {m}m",
-    "migraine.failed": "Couldn't save that: {err}",
+    "migraine.duration_days": "{d}d {h}h",
+    "migraine.btn.start_time": "🕑 Start time",
+    "migraine.btn.end_time": "🕑 End time",
+    "migraine.btn.worse": "📈 It's worse",
+    "migraine.btn.peak": "📈 Worst",
+    "migraine.btn.aura": "Aura",
+    "migraine.btn.symptoms": "Symptoms",
+    "migraine.btn.medication": "💊 Medication",
+    "migraine.btn.relief": "Did it help?",
+    "migraine.btn.triggers": "Triggers",
+    "migraine.btn.over": "✅ It's over",
+    "migraine.btn.forgot_end": "Don't remember when it ended",
+    "migraine.btn.delete": "🗑 Delete",
+    "migraine.btn.delete_yes": "Yes, delete",
+    "migraine.btn.back": "« Back",
+    "migraine.btn.new": "➕ New attack",
+    "migraine.btn.edit_last": "✏️ Edit last attack",
+    "migraine.btn.now": "Now",
+    "migraine.btn.ago": "{h}h ago",
+    "migraine.btn.yes": "Yes",
+    "migraine.btn.no": "No",
+    "migraine.btn.done": "Done",
+    "migraine.btn.no_med": "Didn't take anything",
+    "migraine.btn.own_trigger": "✏️ Write my own",
+    "migraine.btn.clear": "Clear",
+    "migraine.err.not_found": "I can't find that attack any more — it may have been deleted.",
+    "migraine.err.not_migraine": "That button doesn't belong to a migraine entry.",
+    "migraine.err.already_ended": "That attack is already closed.",
+    "migraine.err.not_ended": "That attack is still open — close it first.",
+    "migraine.err.end_before_start": "The end can't be before the start. Try another time.",
+    "migraine.err.in_future": "That time is in the future. Try another time.",
+    "migraine.err.bad_scale": "Please pick a value from 1 to 10.",
+    "migraine.err.unknown_symptom": "That option isn't available any more — please try again.",
+    "migraine.err.unknown_trigger": "That option isn't available any more — please try again.",
+    "migraine.err.relief_without_medication": (
+        "Add the medication first, then rate how much it helped."
+    ),
+    "migraine.err.generic": "Something went wrong saving that. Please try again.",
     "skip.failed": "Couldn't skip: {err}",
     # /today, /week
     "today.empty": "No entries today.",
@@ -229,10 +314,14 @@ EN: dict[str, str] = {
         "negative thought and want to work through it.\n"
         "/backfill <date> <metric> <value> — log for a past date. "
         "Use when you forgot to log yesterday or want to add an old entry.\n"
-        "/migraine — log a migraine attack step by step (start time, "
-        "intensity, aura, symptoms, medication, trigger), then tap "
-        "\"It's over\" to record duration, peak and relief. Use when an "
-        "attack starts — or afterwards to log one that already passed.\n\n"
+        "/migraine — one tap saves an attack; the card it shows has "
+        "optional buttons for start time, aura, symptoms, medication, "
+        "triggers and \"It's over\", and you can change any of them later. "
+        "Use when an attack starts — or afterwards to log one that already "
+        "passed (times like 'yesterday 22:00' work).\n"
+        "/migraines [7d|30d|90d|all] — attacks, headache days, typical length, "
+        "triggers and which medication helps. Use before a doctor's "
+        "appointment or to see whether things are changing.\n\n"
         "🌱 Behavioral activation\n"
         "/activate — plan a small mood-lifting activity and predict its "
         "lift. Use when you feel low and want a concrete step out of it.\n"
@@ -340,53 +429,138 @@ RU: dict[str, str] = {
     "skip.pick": "Какой план пропускаем?",
     "skip.ask_reason": "Причина одной строкой? (или /cancel, чтобы пропустить без причины)",
     "skip.saved": "Пропущено. Без осуждения — иногда сама попытка спланировать уже работа.",
-    "migraine.ongoing": "У тебя записан приступ с {start}. Он уже прошёл?",
-    "migraine.btn_over": "Прошёл",
-    "migraine.btn_new": "Новый приступ",
-    "migraine.ask_start": (
-        "Сочувствую. Когда он начался? "
-        "Нажми кнопку или напиши время, например 14:30."
+    "migraines.header": "Мигрени, {start} → {end}",
+    "migraines.empty": "Между {start} и {end} приступов мигрени не записано.",
+    "migraines.bad_period": "Используй /migraines 7d, 30d, 90d или all.",
+    "migraines.attacks": "Приступов: {n} · дней с головной болью: {days}",
+    "migraines.open": " (ещё открыто: {n})",
+    "migraines.duration": "Обычная длительность: {avg} (самый долгий {longest})",
+    "migraines.peak": "Средний максимум: {avg}/10 (наибольший {max}/10)",
+    "migraines.aura": "Аура: в {n} из {total}",
+    "migraines.symptoms": "Частые симптомы: {items}",
+    "migraines.triggers": "Возможные триггеры: {items}",
+    "migraines.meds_header": "Лекарства:",
+    "migraines.med_line": "• {name} — {n}×",
+    "migraines.med_relief": " · в среднем помогло на {relief}/10",
+    "migraines.med_days": "Обезболивающие записаны в {n} из последних 30 дней.",
+    "migraines.med_flag": (
+        "Если принимать обезболивающие так часто, головные боли сами могут "
+        "становиться чаще — об этом стоит рассказать врачу."
     ),
-    "migraine.btn_now": "Сейчас",
-    "migraine.btn_ago": "{h} ч назад",
-    "migraine.bad_time": "Не получилось разобрать — напиши время вроде 14:30 или нажми кнопку.",
-    "migraine.ask_intensity": "Насколько сильно болит сейчас? (1–10)",
+    "migraine.label": "Мигрень",
+    "migraine.reminder": (
+        "Тихо напоминаю — приступ ещё идёт? "
+        "Если прошёл, нажми «Прошёл»."
+    ),
+    "migraine.btn.mute": "🔕 Не напоминать",
+    "migraine.ask_intensity": (
+        "Сочувствую. Насколько сильно болит сейчас? (1–10)\n"
+        "Начало запишется как «сейчас» — время можно поменять потом."
+    ),
+    "migraine.ask_start": (
+        "Когда начался? Нажми кнопку или напиши время: 14:30, вчера 22:00, 06.10 18:30."
+    ),
+    "migraine.ask_end": (
+        "Когда закончился? Нажми кнопку или напиши время: 18:45, вчера 23:10, 06.10 07:30."
+    ),
+    "migraine.bad_time": (
+        "Не получилось разобрать. Попробуй 14:30, вчера 22:00 или 06.10 18:30 — "
+        "или нажми кнопку выше."
+    ),
+    "migraine.ask_peak": "Насколько сильно сейчас в самый тяжёлый момент? (1–10)",
+    "migraine.ask_peak_end": "Насколько сильно было в самый тяжёлый момент? (1–10)",
     "migraine.ask_aura": "Была аура (зрительные или другие предвестники)?",
-    "migraine.btn_yes": "Да",
-    "migraine.btn_no": "Нет",
     "migraine.ask_symptoms": "Что-то ещё сопровождает? Отметь всё подходящее и нажми «Готово».",
+    "migraine.ask_triggers": (
+        "Что могло повлиять? Отметь всё подходящее или напиши своё. "
+        "Догадки — тоже нормально."
+    ),
+    "migraine.ask_trigger_text": "Напиши в паре слов:",
+    "migraine.ask_med": "Что ты приняла? Выбери из недавних или напиши что и сколько.",
+    "migraine.ask_end_med": (
+        "Ты что-нибудь принимала? Выбери из недавних, напиши что и сколько "
+        "или нажми «Ничего не принимала»."
+    ),
+    "migraine.ask_relief": "Насколько это помогло? (1 — совсем нет, 10 — полностью)",
+    "migraine.ask_delete": "Удалить этот приступ? Отменить будет нельзя.",
+    "migraine.deleted": "Удалено.",
+    "migraine.saved_note": "✓ Сохранено",
+    "migraine.stale_button": "Эта кнопка из прошлого шага — используй последнее сообщение.",
     "migraine.sym.nausea": "Тошнота",
     "migraine.sym.light": "Светобоязнь",
     "migraine.sym.sound": "Звукобоязнь",
     "migraine.sym.one_sided": "Боль с одной стороны",
-    "migraine.btn_done": "Готово",
-    "migraine.ask_med": (
-        "Ты что-нибудь приняла? Напиши что и сколько, или нажми «Ничего»."
-    ),
-    "migraine.btn_nothing": "Ничего",
-    "migraine.ask_trigger": (
-        "Есть догадки, что могло спровоцировать? Пара слов — или «Пропустить»."
-    ),
-    "migraine.btn_skip": "Пропустить",
-    "migraine.saved_ongoing": (
-        "Сохранено (начало {start}, сила {intensity}/10). Приступ ещё идёт?"
-    ),
-    "migraine.btn_still": "Ещё идёт",
-    "migraine.still_going": (
-        "Хорошо. Нажми кнопку, когда пройдёт, или снова отправь /migraine. "
-        "Береги себя."
-    ),
-    "migraine.ask_end": "Когда закончился? Нажми кнопку или напиши время, например 18:45.",
-    "migraine.end_before_start": "Это раньше начала ({start}). Попробуй другое время.",
-    "migraine.ask_peak": "Насколько сильно было в самый тяжёлый момент? (1–10)",
-    "migraine.ask_end_med": (
-        "Ты что-нибудь принимала во время приступа? Напиши что и сколько, "
-        "или нажми «Ничего»."
-    ),
-    "migraine.ask_relief": "Насколько это помогло? (1 — совсем нет, 10 — полностью)",
-    "migraine.saved_ended": "Записано: {duration}, пик {peak}/10. Отдыхай.",
+    "migraine.trg.sleep": "Плохой сон",
+    "migraine.trg.stress": "Стресс",
+    "migraine.trg.skipped_meal": "Пропуск еды",
+    "migraine.trg.dehydration": "Мало воды",
+    "migraine.trg.alcohol": "Алкоголь",
+    "migraine.trg.screens": "Экраны",
+    "migraine.trg.weather": "Погода",
+    "migraine.trg.cycle": "Менструальный цикл",
+    "migraine.card.title_open": "🤕 Мигрень — идёт",
+    "migraine.card.title_ended": "Мигрень — закончилась",
+    "migraine.card.started_ago": "Начало: {when} ({ago} назад)",
+    "migraine.card.started": "Начало: {when}",
+    "migraine.card.ended": "Конец: {when} · длилась {duration}",
+    "migraine.card.ended_unknown": "Конец: время не записано",
+    "migraine.card.intensity": "Сила: {start}/10 в начале · максимум {peak}/10",
+    "migraine.card.aura": "Аура: {value}",
+    "migraine.card.symptoms": "Симптомы: {value}",
+    "migraine.card.triggers": "Возможные триггеры: {value}",
+    "migraine.card.medication": "Лекарство: {value}",
+    "migraine.card.relief": " · помогло на {relief}/10",
+    "migraine.card.none": "—",
+    "migraine.card.yes": "да",
+    "migraine.card.no": "нет",
+    "migraine.card.stale": "⚠️ Открыт уже {duration}. Может, ты забыла его закрыть?",
+    "migraine.card.closed_footer": "Отдыхай. Ниже можно поменять что угодно.",
+    "migraine.when.yesterday": "вчера {time}",
+    "migraine.summary": "{span} ({duration}), пик {peak}",
+    "migraine.summary_open": "с {start}, идёт, пик пока {peak}",
+    "migraine.summary_unknown_end": "с {start}, конец не записан, пик {peak}",
+    "migraine.summary_med": "; {med}",
+    "migraine.summary_relief": " → помогло на {relief}/10",
+    "migraine.duration_min": "{m} мин",
     "migraine.duration": "{h} ч {m} мин",
-    "migraine.failed": "Не получилось сохранить: {err}",
+    "migraine.duration_days": "{d} д {h} ч",
+    "migraine.btn.start_time": "🕑 Начало",
+    "migraine.btn.end_time": "🕑 Конец",
+    "migraine.btn.worse": "📈 Стало хуже",
+    "migraine.btn.peak": "📈 Максимум",
+    "migraine.btn.aura": "Аура",
+    "migraine.btn.symptoms": "Симптомы",
+    "migraine.btn.medication": "💊 Лекарство",
+    "migraine.btn.relief": "Помогло?",
+    "migraine.btn.triggers": "Триггеры",
+    "migraine.btn.over": "✅ Прошёл",
+    "migraine.btn.forgot_end": "Не помню, когда закончился",
+    "migraine.btn.delete": "🗑 Удалить",
+    "migraine.btn.delete_yes": "Да, удалить",
+    "migraine.btn.back": "« Назад",
+    "migraine.btn.new": "➕ Новый приступ",
+    "migraine.btn.edit_last": "✏️ Изменить последний приступ",
+    "migraine.btn.now": "Сейчас",
+    "migraine.btn.ago": "{h} ч назад",
+    "migraine.btn.yes": "Да",
+    "migraine.btn.no": "Нет",
+    "migraine.btn.done": "Готово",
+    "migraine.btn.no_med": "Ничего не принимала",
+    "migraine.btn.own_trigger": "✏️ Написать своё",
+    "migraine.btn.clear": "Очистить",
+    "migraine.err.not_found": "Не могу найти этот приступ — возможно, он удалён.",
+    "migraine.err.not_migraine": "Эта кнопка не относится к записи о мигрени.",
+    "migraine.err.already_ended": "Этот приступ уже закрыт.",
+    "migraine.err.not_ended": "Этот приступ ещё открыт — сначала закрой его.",
+    "migraine.err.end_before_start": "Конец не может быть раньше начала. Попробуй другое время.",
+    "migraine.err.in_future": "Это время ещё не наступило. Попробуй другое.",
+    "migraine.err.bad_scale": "Выбери значение от 1 до 10.",
+    "migraine.err.unknown_symptom": "Этот вариант больше недоступен — попробуй ещё раз.",
+    "migraine.err.unknown_trigger": "Этот вариант больше недоступен — попробуй ещё раз.",
+    "migraine.err.relief_without_medication": (
+        "Сначала добавь лекарство, потом оцени, насколько помогло."
+    ),
+    "migraine.err.generic": "Что-то пошло не так при сохранении. Попробуй ещё раз.",
     "skip.failed": "Не получилось пропустить: {err}",
     "today.empty": "Сегодня записей нет.",
     "today.header": "Сегодня:",
@@ -476,10 +650,14 @@ RU: dict[str, str] = {
         "негативную мысль и хочешь её разобрать.\n"
         "/backfill <дата> <метрика> <значение> — запись задним числом. "
         "Если забыла записать вчера или хочешь добавить старую запись.\n"
-        "/migraine — пошаговая запись приступа мигрени (начало, сила, "
-        "аура, симптомы, лекарство, триггер), потом кнопка «Прошёл» — "
-        "длительность, пик и насколько помогло лекарство. Когда приступ "
-        "начался — или уже после, чтобы записать прошедший.\n\n"
+        "/migraine — одно нажатие сохраняет приступ; в карточке есть "
+        "необязательные кнопки: начало, аура, симптомы, лекарство, "
+        "триггеры и «Прошёл», и всё можно поменять позже. Когда приступ "
+        "начался — или уже после, чтобы записать прошедший (подойдёт "
+        "время вроде «вчера 22:00»).\n"
+        "/migraines [7d|30d|90d|all] — приступы, дни с болью, обычная "
+        "длительность, триггеры и какое лекарство помогает. Перед визитом "
+        "к врачу или чтобы увидеть, меняется ли что-то.\n\n"
         "🌱 Поведенческая активация\n"
         "/activate — запланировать маленькое действие и спрогнозировать "
         "его эффект. Когда настроение низкое и нужен конкретный шаг.\n"

@@ -18,6 +18,9 @@ from app.logging_setup import configure_logging
 from app.services.analysis_service import AnalysisService
 from app.services.anomaly_checkin_service import AnomalyCheckinService
 from app.services.anomaly_detector import AnomalyDetector
+from app.services.entry_service import EntryService
+from app.services.migraine_reminder_service import MigraineReminderService
+from app.services.migraine_service import MigraineService
 from app.services.schedule_service import SummaryScheduler
 from app.services.summary_service import SummaryService
 
@@ -54,11 +57,19 @@ async def main() -> None:
         detector=AnomalyDetector(),
         bot=bot,
     )
+    migraine_reminders = MigraineReminderService(
+        sessionmaker=container.sessionmaker,
+        migraine_factory=lambda s, now: MigraineService(
+            EntryService(SqlEntryRepository(s), container.cipher), clock=lambda: now
+        ),
+        bot=bot,
+    )
     scheduler = SummaryScheduler(
         sessionmaker=container.sessionmaker,
         delivery=summary_service.send,
         allowed_telegram_ids=settings.allowed_telegram_ids,
         checkin_probe=checkin_service.maybe_probe,
+        migraine_reminder=migraine_reminders.maybe_remind,
     )
 
     # Order matters: outermost first.

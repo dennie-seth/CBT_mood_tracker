@@ -57,3 +57,32 @@ def test_zero_overlap_falls_back_to_render_all_present_metrics() -> None:
     assert len(natural) > _placeholder_size() * 1.5
     # And the fallback should look like the natural render (within charting jitter).
     assert abs(len(fallback) - len(natural)) < len(natural) * 0.2  # within 20%
+
+
+def test_migraine_drawn_as_markers_not_a_line(monkeypatch) -> None:
+    """Days without an attack are gaps, not missing data. Connecting attack
+    peaks with a line would suggest a continuous signal."""
+    import matplotlib.axes
+
+    plotted: list[str] = []
+    scattered: list[str] = []
+    real_plot, real_scatter = matplotlib.axes.Axes.plot, matplotlib.axes.Axes.scatter
+
+    def plot(self, *a, **kw):
+        plotted.append(kw.get("label", ""))
+        return real_plot(self, *a, **kw)
+
+    def scatter(self, *a, **kw):
+        scattered.append(kw.get("label", ""))
+        return real_scatter(self, *a, **kw)
+
+    monkeypatch.setattr(matplotlib.axes.Axes, "plot", plot)
+    monkeypatch.setattr(matplotlib.axes.Axes, "scatter", scatter)
+
+    df = _df(mood=[5.0, 6.0, 7.0], migraine=[7.0, float("nan"), 5.0])
+    png = ChartService().line(df)
+
+    assert png.startswith(b"\x89PNG")
+    assert any("Migraine" in s for s in scattered)
+    assert not any("Migraine" in p for p in plotted)
+    assert any("Mood" in p for p in plotted)

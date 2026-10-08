@@ -8,33 +8,10 @@ import pytz
 from cryptography.fernet import Fernet
 
 from app.domain.enums import MetricType
-from app.domain.models import Entry, User
+from app.domain.models import User
 from app.infrastructure.crypto import FernetCipher
 from app.services.entry_service import EntryService
-
-
-class FakeEntryRepo:
-    def __init__(self) -> None:
-        self.rows: list[Entry] = []
-        self._next = 1
-
-    async def add(self, entry: Entry) -> Entry:
-        entry.id = self._next
-        self._next += 1
-        self.rows.append(entry)
-        return entry
-
-    async def list_range(self, user_id, start, end, metric_types=None):
-        out = [
-            r for r in self.rows
-            if r.user_id == user_id and start <= r.entry_date <= end
-        ]
-        if metric_types:
-            out = [r for r in out if r.metric_type in metric_types]
-        return out
-
-    async def daily_aggregates(self, user_id, start, end):
-        return []
+from tests.unit.fakes import FakeEntryRepo
 
 
 @pytest.fixture()

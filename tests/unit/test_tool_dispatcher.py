@@ -69,3 +69,30 @@ async def test_query_entries_preserves_chronological_order() -> None:
     )
     times = [e["time"] for e in out["entries"]]
     assert times == sorted(times)
+
+
+async def test_migraine_stats_tool() -> None:
+    from app.ai.tools import TOOL_SCHEMAS
+
+    schema = next(s for s in TOOL_SCHEMAS if s["name"] == "migraine_stats")
+    assert "user_id" not in schema["input_schema"]["properties"]
+
+    start = datetime(2026, 5, 3, 9, 0, tzinfo=UTC)
+    attack = EntryDTO(
+        id=5, recorded_at=start, entry_date=date(2026, 5, 3),
+        metric_type=MetricType.MIGRAINE, value_numeric=7.0, value_text=None, tags=None,
+        extra={"status": "ended", "started_at": start.isoformat(),
+               "ended_at": datetime(2026, 5, 3, 15, 0, tzinfo=UTC).isoformat(),
+               "duration_minutes": 360, "start_intensity": 5, "peak_intensity": 7,
+               "symptoms": ["nausea"], "triggers": ["sleep"],
+               "medication_text": "ibuprofen", "relief": 6},
+    )
+    disp = _dispatcher([attack], tz="UTC")
+    out = await disp.call(
+        "migraine_stats", {"start_date": "2026-05-01", "end_date": "2026-05-07"}
+    )
+    assert out["attacks"] == 1
+    assert out["headache_days"] == 1
+    assert out["avg_duration_minutes"] == 360
+    assert out["medications"][0]["name"] == "ibuprofen"
+    assert "medication_days_last_30" in out

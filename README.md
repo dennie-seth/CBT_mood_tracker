@@ -51,7 +51,8 @@ The bot's `/help` lists every command with a *use-case* sentence — when to rea
 | `/note <text>` | Something on your mind that doesn't fit any metric (encrypted) |
 | `/thought` | Catching a strong negative thought — guided CBT thought record |
 | `/backfill <date> <metric> <value>` | Logging an entry for a past date |
-| `/migraine` | A migraine attack starts (or just passed) — guided log of onset, intensity, aura, symptoms, medication and trigger; tap *It's over* later for duration, peak and relief |
+| `/migraine` | A migraine attack starts (or just passed) — one tap saves it; the attack card has optional buttons for start time, aura, symptoms, medication, triggers and *It's over*, all editable later (times like `yesterday 22:00` work) |
+| `/migraines [7d\|30d\|90d\|all]` | Before a doctor's appointment, or to see whether attacks are changing — counts, headache days, length, triggers, medication relief and a medication-days counter |
 | `/activate` | Feeling low and want a concrete mood-lifting step (Behavioral Activation) |
 | `/plans` | Reviewing what plans you've committed to |
 | `/done` | Just completed a planned activity — rate the actual lift |
@@ -76,6 +77,8 @@ The bot's `/help` lists every command with a *use-case* sentence — when to rea
 Numeric (1–10): mood, energy, hunger, anxiety, stress, irritability, focus, pain, sleep quality. Plus sleep duration in hours.
 
 Free-text (encrypted): body symptoms, thought records, activities, substances/medication, triggers, coping strategies, free-form notes.
+
+Migraine attacks (`/migraine`): one entry per attack. Its number is the worst intensity (so attacks chart alongside other metrics); onset/end times, aura, symptoms and trigger keys are stored as plain metadata, while medication and your own trigger text are encrypted.
 
 Multiple entries on the same day combine into one day-bucket via `entry_date`. Day boundaries respect your `/tz`.
 
@@ -127,6 +130,7 @@ Dependencies flow inward: `handlers → services → repositories → domain`. D
 | At rest | Free-text fields encrypted with Fernet. Numeric values + metric_type stay plain so analytics work without decrypts. |
 | Secrets | `.env` git-ignored. Production: place `.env` 0600 root-owned; bot container runs as non-root UID 1000, read-only fs, no capabilities. |
 | Logging | Structured JSON (structlog). Log level / metadata only — message text and entry payloads are NOT logged. |
+| AI | Encryption is at rest only. When you `/ask` or a scheduled summary runs, Haiku reads the entries it requests **decrypted** — including notes, thought records and migraine medication / trigger text — and they are sent to Anthropic's API. Nothing is sent to Anthropic unless one of those features runs. |
 
 ### Key rotation
 
@@ -145,6 +149,10 @@ The bot ships English and Russian UI strings. On first `/start`, language is aut
 Each user can opt in to a daily or weekly Haiku-generated summary. Settings live in `schedule_prefs` (Postgres) and are interpreted in the user's timezone. A once-per-minute in-process tick (`SummaryScheduler`, started from `app/main.py`) scans enabled rows and invokes `SummaryService.send` for whoever's due, idempotently — `*_last_sent_date` prevents double delivery across restarts.
 
 The empty-day case still delivers: the daily prompt asks Haiku to send a brief warm acknowledgement plus a single low-effort reflection question. Haiku replies in the user's language inferred from recent entries.
+
+## Migraine reminders
+
+While an attack is open, the scheduler tick (`MigraineReminderService.maybe_remind`) sends a gentle "is it over?" with the attack card: first 4 h after onset, then every 4 h, at most 3 per attack, only 08:00–22:00 in your tz. The card has a *Don't remind me* button. Reminders are stamped on the attack before sending, so a Telegram failure can't cause a repeat every minute. No Anthropic call.
 
 ## Proactive anomaly check-ins
 

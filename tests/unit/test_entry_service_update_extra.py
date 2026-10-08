@@ -10,45 +10,18 @@ status updates etc. It must:
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 from cryptography.fernet import Fernet
 
 from app.domain.enums import MetricType
-from app.domain.models import Entry, User
+from app.domain.models import User
 from app.infrastructure.crypto import FernetCipher
 from app.services.entry_service import MAX_TEXT_BYTES, EntryService
+from tests.unit.fakes import FakeEntryRepo
 
-
-class FakeRepo:
-    """Adds a `get_for_user` and a flush() for update tests."""
-
-    def __init__(self) -> None:
-        self.rows: list[Entry] = []
-        self._next = 1
-
-    async def add(self, entry: Entry) -> Entry:
-        entry.id = self._next
-        self._next += 1
-        self.rows.append(entry)
-        return entry
-
-    async def list_range(self, *a, **kw):
-        return list(self.rows)
-
-    async def daily_aggregates(self, *a, **kw):
-        return []
-
-    async def get_for_user(self, entry_id: int, user_id: int) -> Entry | None:
-        for r in self.rows:
-            if r.id == entry_id and r.user_id == user_id:
-                return r
-        return None
-
-    async def exists(self, entry_id: int) -> bool:
-        return any(r.id == entry_id for r in self.rows)
-
+FakeRepo = FakeEntryRepo
 
 @pytest.fixture()
 def cipher() -> FernetCipher:
@@ -152,3 +125,55 @@ async def test_update_extra_leaves_value_numeric_alone_by_default(cipher, user) 
     updated = await svc.update_extra(e.id, user, {"status": "ended"})
 
     assert updated.value_numeric == 6.0
+
+
+async def test_update_extra_with_recorded_at_rebuckets_entry_date(cipher) -> None:
+    """Moving an episode's onset (e.g. 'it actually started yesterday')
+    must move its day bucket too, in the user's timezone."""
+    from datetime import date
+
+    u = User(telegram_id=1, display_name="t", timezone="Pacific/Auckland")
+    u.id = 42
+    repo = FakeEntryRepo()
+    svc = EntryService(repo, cipher)
+    e = await svc.create(
+        u, MetricType.MIGRAINE, value_numeric=5,
+        recorded_at=datetime(2026, 5, 5, 3, 0, tzinfo=UTC),  # 15:00 NZ, May 5
+    )
+    assert e.entry_date == date(2026, 5, 5)
+
+    moved = await svc.update_extra(
+        e.id, u, {"status": "ongoing"},
+        recorded_at=datetime(2026, 5, 3, 23, 0, tzinfo=UTC),  # 11:00 NZ, May 4
+    )
+    assert moved.entry_date == date(2026, 5, 4)
+    assert moved.recorded_at == datetime(2026, 5, 3, 23, 0, tzinfo=UTC)
+
+
+# --- delete_for_user ---
+
+async def test_delete_for_user_removes_entry(cipher, user) -> None:
+    repo = FakeEntryRepo()
+    svc = EntryService(repo, cipher)
+    e = await svc.create(user, MetricType.NOTE, value_text="oops")
+
+    await svc.delete_for_user(e.id, user)
+
+    assert repo.rows == []
+
+
+async def test_delete_for_user_refuses_other_users_entry(cipher, user) -> None:
+    repo = FakeEntryRepo()
+    svc = EntryService(repo, cipher)
+    e = await svc.create(user, MetricType.NOTE, value_text="mine")
+    other = User(telegram_id=999, display_name="o", timezone="UTC")
+    other.id = 99
+
+    with pytest.raises(PermissionError):
+        await svc.delete_for_user(e.id, other)
+    assert len(repo.rows) == 1
+
+
+async def test_delete_for_user_unknown_id_raises(cipher, user) -> None:
+    with pytest.raises(LookupError):
+        await EntryService(FakeEntryRepo(), cipher).delete_for_user(123, user)

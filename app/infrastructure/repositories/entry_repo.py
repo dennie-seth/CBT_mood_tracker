@@ -49,6 +49,10 @@ class SqlEntryRepository:
             )
         ) is not None
 
+    async def delete(self, entry: Entry) -> None:
+        await self._session.delete(entry)
+        await self._session.flush()
+
     async def daily_aggregates(
         self,
         user_id: int,

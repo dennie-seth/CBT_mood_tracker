@@ -19,65 +19,16 @@ import pytest
 from cryptography.fernet import Fernet
 
 from app.domain.enums import MetricType
-from app.domain.models import Entry, User
+from app.domain.models import User
 from app.infrastructure.crypto import FernetCipher
 from app.services.entry_service import EntryService
 from app.services.therapist_export_service import (
     TherapistExportService,
     TherapistReportData,
 )
+from tests.unit.fakes import FakeEntryRepo
 
-
-class FakeRepo:
-    def __init__(self) -> None:
-        self.rows: list[Entry] = []
-        self._next = 1
-
-    async def add(self, entry: Entry) -> Entry:
-        entry.id = self._next
-        self._next += 1
-        self.rows.append(entry)
-        return entry
-
-    async def list_range(
-        self, user_id, start, end, metric_types=None
-    ):
-        out = []
-        for r in self.rows:
-            if r.user_id != user_id:
-                continue
-            if not (start <= r.entry_date <= end):
-                continue
-            if metric_types and r.metric_type not in metric_types:
-                continue
-            out.append(r)
-        return out
-
-    async def daily_aggregates(self, user_id, start, end):
-        # Aggregate numeric metrics per (date, metric_type).
-        bucket: dict[tuple[date, str], list[float]] = {}
-        for r in self.rows:
-            if r.user_id != user_id or r.value_numeric is None:
-                continue
-            if not (start <= r.entry_date <= end):
-                continue
-            bucket.setdefault((r.entry_date, r.metric_type), []).append(
-                float(r.value_numeric)
-            )
-        return [
-            (d, m, sum(vals) / len(vals), len(vals))
-            for (d, m), vals in bucket.items()
-        ]
-
-    async def get_for_user(self, entry_id, user_id):
-        for r in self.rows:
-            if r.id == entry_id and r.user_id == user_id:
-                return r
-        return None
-
-    async def exists(self, entry_id):
-        return any(r.id == entry_id for r in self.rows)
-
+FakeRepo = FakeEntryRepo
 
 @pytest.fixture()
 def cipher() -> FernetCipher:
@@ -244,3 +195,38 @@ async def test_collect_includes_numeric_daily_summary(cipher, user) -> None:
     assert not data.daily_df.empty
     assert "mood" in data.daily_df.columns
     assert "sleep_quality" in data.daily_df.columns
+
+
+async def test_collect_includes_migraine_diary_decrypted(cipher, user) -> None:
+    from app.services.migraine_service import MigraineService
+
+    repo = FakeRepo()
+    es = EntryService(repo, cipher)
+    today = date(2026, 5, 4)
+    onset = _at(today - timedelta(days=1), hour=9)
+    ms = MigraineService(es, clock=lambda: _at(today, hour=12))
+    a = await ms.start(
+        user, intensity=5, started_at=onset, aura=True, symptoms=["nausea"],
+        triggers=["sleep"], medication_text="sumatriptan 50", trigger_text="late night",
+    )
+    await ms.end(a.id, user, ended_at=onset + timedelta(hours=6), peak=8)
+    await ms.update(a.id, user, relief=7)
+
+    data = await TherapistExportService(es).collect(
+        user, start=today - timedelta(days=6), end=today
+    )
+
+    assert len(data.migraines) == 1
+    row = data.migraines[0]
+    assert row.entry_date == today - timedelta(days=1)
+    assert row.start_time == "09:00"
+    assert row.duration_minutes == 360
+    assert row.peak == 8
+    assert row.aura is True
+    assert row.symptoms == ["nausea"]
+    assert row.triggers == ["sleep"]
+    assert row.trigger_text == "late night"
+    assert row.medication == "sumatriptan 50"
+    assert row.relief == 7
+    assert data.migraine_stats is not None
+    assert data.migraine_stats.attacks == 1
