@@ -51,7 +51,7 @@ The bot's `/help` lists every command with a *use-case* sentence — when to rea
 | `/note <text>` | Something on your mind that doesn't fit any metric (encrypted) |
 | `/thought` | Catching a strong negative thought — guided CBT thought record |
 | `/backfill <date> <metric> <value>` | Logging an entry for a past date |
-| `/migraine` | A migraine attack starts (or just passed) — guided log of onset, intensity, aura, symptoms, medication and trigger; tap *It's over* later for duration, peak and relief |
+| `/migraine` | A migraine attack starts (or just passed) — one tap saves it; the attack card has optional buttons for start time, aura, symptoms, medication, triggers and *It's over*, all editable later (times like `yesterday 22:00` work) |
 | `/activate` | Feeling low and want a concrete mood-lifting step (Behavioral Activation) |
 | `/plans` | Reviewing what plans you've committed to |
 | `/done` | Just completed a planned activity — rate the actual lift |

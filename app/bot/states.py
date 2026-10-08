@@ -38,15 +38,9 @@ class SkipFlow(StatesGroup):
 
 
 class MigraineFlow(StatesGroup):
-    # Starting an attack
-    start_time = State()
-    intensity = State()
-    aura = State()
-    symptoms = State()
+    # Only the free-text steps need state; every button on the attack card
+    # carries its entry id (mg:<action>:<id>) and works statelessly.
+    # Data: entry_id, prompt_id, plus field/closing/meds per step.
+    typed_time = State()
     medication = State()
-    trigger = State()
-    # Ending it (entered via the "It's over" button)
-    end_time = State()
-    peak = State()
-    end_medication = State()
-    relief = State()
+    trigger_text = State()
