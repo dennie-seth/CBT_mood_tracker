@@ -13,9 +13,13 @@ def test_weekly_pulls_events_not_just_averages() -> None:
     assert "daily_summary" in WEEKLY_PROMPT
 
 
-def test_weekly_asks_for_cause_effect_links() -> None:
+def test_weekly_links_events_by_verified_order_not_assumed_cause() -> None:
     lower = WEEKLY_PROMPT.lower()
-    assert "cause" in lower or "→" in WEEKLY_PROMPT or "led" in lower
+    # Links are "what followed what", checked against timestamps — not claims
+    # that one thing caused another.
+    assert "followed" in lower
+    assert "timestamp" in lower or "recorded_at" in lower
+    assert "cause→effect" not in lower
     # Keeps the mood + energy + anxiety chart (charted-metrics regression).
     assert "mood" in lower and "energy" in lower and "anxiety" in lower
 
@@ -47,3 +51,8 @@ def test_build_weekly_context_renders_weeks_oldest_first() -> None:
     assert "Focused on sleep." in ctx and "Sleep improved, mood up." in ctx
     # Oldest week appears before the newer one.
     assert ctx.index("Focused on sleep.") < ctx.index("Sleep improved, mood up.")
+
+
+def test_summaries_are_plain_text() -> None:
+    for prompt in (DAILY_PROMPT, WEEKLY_PROMPT):
+        assert "plain text" in prompt.lower()

@@ -1,0 +1,53 @@
+{
+  "metrics": [
+    {
+      "id": "pass",
+      "label": "All checks",
+      "kind": "binary"
+    },
+    {
+      "id": "checks",
+      "label": "Checks passed",
+      "kind": "float",
+      "scale": 1
+    },
+    {
+      "id": "format",
+      "label": "Plain text",
+      "kind": "binary"
+    },
+    {
+      "id": "language",
+      "label": "Language",
+      "kind": "binary"
+    }
+  ],
+  "perf_fields": [
+    {
+      "id": "cost_usd",
+      "label": "Cost",
+      "unit": "$"
+    }
+  ],
+  "prices": {
+    "claude-haiku-4-5-20251001": {
+      "in": 1.0,
+      "out": 5.0
+    },
+    "claude-haiku-5-5": {
+      "in": 0.1,
+      "out": 0.5
+    },
+    "claude-opus-5-5": {
+      "in": 4.0,
+      "out": 20.0
+    }
+  },
+  "harness_paths": [
+    "evals/ask_quality/run_eval.py",
+    "evals/ask_quality/judge.py",
+    "evals/ask_quality/fixture.py",
+    "evals/ask_quality/cases.py",
+    "evals/ask_quality/memory_repo.py"
+  ]
+}

@@ -9,7 +9,7 @@ Personal Telegram bot for **CBT (Cognitive Behavioural Therapy) self-tracking** 
 - Python 3.12, `aiogram` 3, `SQLAlchemy` 2 async, `alembic`
 - PostgreSQL 16 (dev & prod via Docker)
 - `cryptography` for app-level field encryption
-- Anthropic SDK — model `claude-haiku-4-5-20251001`, tool-use loop
+- Anthropic SDK — model `claude-haiku-5-5` (effort `medium`), tool-use loop
 - `pandas` + `matplotlib` for analytics, charts, PDF reports
 - `pytest` + `ruff` + `mypy`
 

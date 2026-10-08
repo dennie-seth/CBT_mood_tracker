@@ -103,3 +103,12 @@ def test_db_url_env_var_no_longer_a_source_of_truth(settings_factory) -> None:
     s = settings_factory(DB_URL="postgresql+asyncpg://stale:stale@stale:5432/stale")
     assert "stale" not in s.db_url
     assert s.db_url == "postgresql+asyncpg://mood:simple@postgres:5432/mood"
+
+
+def test_ai_defaults_follow_the_eval() -> None:
+    """Claude Haiku 5.5 at medium effort won the /ask eval
+    (evals/ask_quality/RESULTS.md); keep the defaults in sync with it."""
+    from app.config import Settings
+
+    assert Settings.model_fields["anthropic_model"].default == "claude-haiku-5-5"
+    assert Settings.model_fields["anthropic_effort"].default == "medium"

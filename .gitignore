@@ -38,3 +38,10 @@ venv/
 
 # Postgres data dirs (if ever bind-mounted by accident)
 pgdata/
+
+# Eval outputs: keep results.jsonl/_state.json, not bulk or derived files
+.claude/hillclimb/**/traces/
+.claude/hillclimb/**/report.html
+.claude/hillclimb/**/state.json
+.claude/hillclimb/**/trajectory/
+.claude/hillclimb/**/harness.sha

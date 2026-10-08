@@ -50,6 +50,7 @@ def build_container(settings: Settings) -> Container:
         client=ai_client,
         model=settings.anthropic_model,
         max_iterations=settings.ai_max_tool_iterations,
+        effort=settings.anthropic_effort or None,
     )
     fsm_storage = PgFsmStorage(sm, cipher)
     return Container(

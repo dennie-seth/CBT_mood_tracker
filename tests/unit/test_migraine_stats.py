@@ -106,3 +106,19 @@ def test_to_dict_is_json_friendly() -> None:
     json.dumps(data)
     assert data["attacks"] == 1
     assert data["medications"][0]["name"] == "x"
+
+
+
+def test_duration_stats_say_how_many_attacks_they_cover() -> None:
+    """avg/longest duration only cover attacks with a recorded end — the
+    output must say so, or the model reports a duration for the others."""
+    attacks = [
+        _attack(_d(1), hours=4),
+        _attack(_d(3), hours=None),  # ongoing
+        _attack(_d(5), hours=None, status="ended", end_unknown=True),
+    ]
+    s = compute_stats(attacks, start=START, end=END, tz_name="UTC", now=NOW)
+    assert s.attacks_with_known_duration == 1
+    assert s.attacks_end_unknown == 1
+    d = s.to_dict()
+    assert d["attacks_with_known_duration"] == 1

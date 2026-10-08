@@ -96,3 +96,58 @@ async def test_migraine_stats_tool() -> None:
     assert out["avg_duration_minutes"] == 360
     assert out["medications"][0]["name"] == "ibuprofen"
     assert "medication_days_last_30" in out
+
+
+
+async def test_query_entries_includes_local_weekday() -> None:
+    # 22:30 UTC Mon 2026-05-04 is 00:30 Tue 2026-05-05 in Belgrade.
+    rec = datetime(2026, 5, 4, 22, 30, tzinfo=UTC)
+    disp = _dispatcher([_dto(rec, date(2026, 5, 5), MetricType.MOOD, num=7.0)])
+    out = await disp.call("query_entries", {"start_date": "2026-05-04", "end_date": "2026-05-05"})
+    assert out["entries"][0]["weekday"] == "Tue"
+
+
+async def test_daily_summary_includes_weekday() -> None:
+    import pandas as pd
+
+    class _Analysis:
+        async def daily_summary(self, user_id, start, end):
+            return pd.DataFrame({"mood": [6.0]}, index=pd.to_datetime(["2026-05-05"]))
+
+    disp = _dispatcher([])
+    disp.analysis_service = _Analysis()  # type: ignore[assignment]
+    out = await disp.call("daily_summary", {"start_date": "2026-05-05", "end_date": "2026-05-05"})
+    assert out["days"][0]["weekday"] == "Tue"
+
+
+
+async def test_daily_summary_lists_days_without_data_with_weekdays() -> None:
+    """So the model never computes a weekday for an empty day itself."""
+    import pandas as pd
+
+    class _Analysis:
+        async def daily_summary(self, user_id, start, end):
+            return pd.DataFrame({"mood": [6.0, 5.0]},
+                                index=pd.to_datetime(["2026-05-04", "2026-05-07"]))
+
+    disp = _dispatcher([])
+    disp.analysis_service = _Analysis()  # type: ignore[assignment]
+    out = await disp.call("daily_summary", {"start_date": "2026-05-04", "end_date": "2026-05-07"})
+    assert out["days_without_data"] == [
+        {"date": "2026-05-05", "weekday": "Tue"},
+        {"date": "2026-05-06", "weekday": "Wed"},
+    ]
+
+
+async def test_daily_summary_empty_range_still_lists_days() -> None:
+    import pandas as pd
+
+    class _Analysis:
+        async def daily_summary(self, user_id, start, end):
+            return pd.DataFrame()
+
+    disp = _dispatcher([])
+    disp.analysis_service = _Analysis()  # type: ignore[assignment]
+    out = await disp.call("daily_summary", {"start_date": "2026-05-04", "end_date": "2026-05-05"})
+    assert out["days"] == []
+    assert [d["weekday"] for d in out["days_without_data"]] == ["Mon", "Tue"]

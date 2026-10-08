@@ -4,7 +4,7 @@ Guidance for Claude Code working in this repository.
 
 ## What this is
 
-Personal Telegram bot for **CBT (Cognitive Behavioural Therapy) self-tracking** with a Claude Haiku assistant attached. The bot logs structured numeric metrics (mood, sleep, energy, …) and free-text records (notes, thought records, symptoms). A Haiku 4.5 tool-use loop answers questions, generates PNG charts, and produces multi-page PDF reports over arbitrary date ranges.
+Personal Telegram bot for **CBT (Cognitive Behavioural Therapy) self-tracking** with a Claude Haiku assistant attached. The bot logs structured numeric metrics (mood, sleep, energy, …) and free-text records (notes, thought records, symptoms). A Claude Haiku 5.5 tool-use loop answers questions, generates PNG charts, and produces multi-page PDF reports over arbitrary date ranges.
 
 Single-user / small-circle; **strictly private** — only allow-listed Telegram IDs may use it; free-text fields are encrypted at rest with `cryptography.Fernet`.
 
@@ -14,7 +14,7 @@ POC runs locally; production target is a single VDS via the existing `docker com
 
 - Python 3.12, `aiogram` 3, `SQLAlchemy` 2 async, `alembic`, PostgreSQL 16
 - `cryptography` (Fernet, multi-key rotation)
-- Anthropic SDK — model `claude-haiku-4-5-20251001`
+- Anthropic SDK — model `claude-haiku-5-5`, effort `medium` (`ANTHROPIC_MODEL` / `ANTHROPIC_EFFORT`; chosen by the `/ask` eval in `evals/ask_quality/`)
 - `pandas` + `matplotlib` (PNG charts and `PdfPages` reports — no extra PDF lib)
 - `pytest` + `pytest-asyncio`, `ruff`, `mypy`
 
@@ -107,6 +107,10 @@ docker compose up --build
 3. Add a `_handler` method to `ToolDispatcher` and dispatch it in `call(...)`.
 4. If the tool returns a binary artifact (PNG/PDF), append a `ToolArtifact` to `self.artifacts` and return a small JSON ack — the host (`AskHandler`) uploads the file.
 5. Update `app/ai/prompts.py` with one line describing the new capability.
+
+### Changing prompts, tools or the model
+
+Re-run the `/ask` eval before shipping: `evals/ask_quality/` (fictional journal, 20 cases, Claude Opus 5.5 grader, ~$1 per setup). See `evals/ask_quality/README.md`. The runner refuses to start after any harness change until the repo owner re-approves it with `--approve-harness`.
 
 ### Database migrations
 

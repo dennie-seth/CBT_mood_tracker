@@ -36,6 +36,9 @@ class MigraineStats:
     attacks: int = 0
     open_attacks: int = 0
     headache_days: int = 0
+    # Durations only cover attacks with a recorded end — say how many.
+    attacks_with_known_duration: int = 0
+    attacks_end_unknown: int = 0
     avg_duration_minutes: int | None = None
     longest_minutes: int | None = None
     avg_peak: float | None = None
@@ -96,7 +99,7 @@ def compute_stats(
     symptoms: Counter[str] = Counter()
     triggers: Counter[str] = Counter()
     meds: dict[str, dict[str, Any]] = {}
-    open_attacks = aura = 0
+    open_attacks = aura = end_unknown = 0
 
     for a in sorted(attacks, key=lambda e: e.recorded_at):
         x = a.extra or {}
@@ -104,6 +107,7 @@ def compute_stats(
         peaks.append(_peak(a))
         open_attacks += x.get("status") == "ongoing"
         aura += x.get("aura") is True
+        end_unknown += bool(x.get("end_unknown"))
         if x.get("duration_minutes") is not None:
             durations.append(int(x["duration_minutes"]))
         symptoms.update(x.get("symptoms") or [])
@@ -123,6 +127,8 @@ def compute_stats(
         attacks=len(attacks),
         open_attacks=open_attacks,
         headache_days=len(covered),
+        attacks_with_known_duration=len(durations),
+        attacks_end_unknown=end_unknown,
         avg_duration_minutes=round(sum(durations) / len(durations)) if durations else None,
         longest_minutes=max(durations) if durations else None,
         avg_peak=round(sum(peaks) / len(peaks), 1) if peaks else None,
