@@ -121,7 +121,8 @@ class ChartService:
         ax.set_yticks([11.5 - i for i in range(12)])
         ax.set_yticklabels(list(calendar.month_abbr)[1:], color=_INK, fontsize=9)
         ax.tick_params(length=0)
-        ax.spines[:].set_visible(False)
+        for side in ("top", "right", "bottom", "left"):
+            ax.spines[side].set_visible(False)
         ax.set_aspect("equal")
         ax.set_title(f"Mood {year}", loc="left", fontsize=14, color=_INK)
 
@@ -130,7 +131,7 @@ class ChartService:
             fraction=0.04, pad=0.08, aspect=40, ticks=[1, 5, 10],
         )
         bar.ax.set_xticklabels(["1 low", "5 neutral", "10 good"], color=_MUTED, fontsize=8)
-        bar.outline.set_visible(False)
+        bar.ax.spines["outline"].set_visible(False)
         ax.text(31, 12.25, "▼ migraine day    □ no mood logged", ha="right", va="bottom",
                 fontsize=8, color=_MUTED)
         fig.tight_layout()
