@@ -10,6 +10,7 @@ from app.bot.deps import entry_service
 from app.bot.i18n import metric_label, t
 from app.bot.keyboards import entry_actions, metric_picker, scale_1_to_10
 from app.bot.states import LogFlow
+from app.bot.support import offer_support
 from app.domain.enums import NUMERIC_METRICS, MetricType
 from app.domain.models import User
 from app.infrastructure.crypto import FernetCipher
@@ -73,6 +74,8 @@ async def numeric_chosen(
         reply_markup=entry_actions(user.language, [dto.id], [(metric, float(value))]),
     )
     await cb.answer()
+    if isinstance(cb.message, Message):
+        await offer_support(cb.message, user, svc, [(metric, float(value))])
 
 
 @router.message(LogFlow.enter_value)
@@ -105,6 +108,7 @@ async def value_typed(
             ),
             reply_markup=entry_actions(user.language, [dto.id], [(metric, value)]),
         )
+        await offer_support(message, user, svc, [(metric, value)])
         return
 
     dto = await svc.create(user, metric, value_text=message.text.strip())

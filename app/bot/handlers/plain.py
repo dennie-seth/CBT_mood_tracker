@@ -24,6 +24,7 @@ from app.bot.handlers.ask import run_ask
 from app.bot.i18n import t
 from app.bot.keyboards import entry_actions
 from app.bot.states import PlainTextFlow, ThoughtFlow
+from app.bot.support import offer_support
 from app.di import Container
 from app.domain.enums import MetricType
 from app.domain.models import User
@@ -63,6 +64,7 @@ async def plain_text(
               date=dtos[0].entry_date.isoformat()),
             reply_markup=entry_actions(lang, [d.id for d in dtos], readings),
         )
+        await offer_support(message, user, svc, readings)
         return
 
     await state.set_state(PlainTextFlow.pending)

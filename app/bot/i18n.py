@@ -393,6 +393,29 @@ EN: dict[str, str] = {
     "pause.bad_args": "Use /pause 1d … /pause 14d, or /pause off.",
     "cmd.hide": "Clear this chat (entries stay saved)",
     "cmd.pause": "Quiet mode: pause the bot's own messages",
+    # Hard moments
+    "support.header": "Things that helped you before:",
+    "support.offer": "Want to slow down for a minute?",
+    "support.btn.breathe": "🫁 Breathe with me",
+    "support.btn.ground": "🖐 5-4-3-2-1 grounding",
+    "breathe.choose": "Pick one — each takes about a minute.",
+    "breathe.title": "🫁 Box breathing · round {round}/{total}",
+    "breathe.in": "Breathe in through your nose… 4",
+    "breathe.hold_in": "Hold gently… 4",
+    "breathe.out": "Breathe out slowly… 4",
+    "breathe.hold_out": "Rest… 4",
+    "breathe.btn.stop": "■ Stop",
+    "breathe.done": "Well done. Notice how your body feels now.",
+    "breathe.stopped": "Stopped. Come back any time with /breathe.",
+    "breathe.btn.log_anxiety": "😰 Log anxiety now",
+    "ground.5": "👀 Look around and name 5 things you can see.",
+    "ground.4": "✋ Notice 4 things you can touch or feel.",
+    "ground.3": "👂 Listen for 3 things you can hear.",
+    "ground.2": "👃 Notice 2 things you can smell.",
+    "ground.1": "👅 Notice 1 thing you can taste.",
+    "ground.btn.next": "Done ✓",
+    "ground.done": "You're here, now. Take one slow breath.",
+    "cmd.breathe": "Breathing or grounding exercise",
     # Command menu (Telegram "/" list)
     "cmd.mood": "Log mood 1-10",
     "cmd.anxiety": "Log anxiety 1-10",
@@ -518,6 +541,10 @@ EN: dict[str, str] = {
         "/checkins on|off — proactive nudges when mood, sleep or "
         "anxiety look unusual. Enable if you want the bot to reach "
         "out instead of waiting for your move.\n\n"
+        "🫁 Hard moments\n"
+        "/breathe — box breathing or 5-4-3-2-1 grounding, all taps, no typing. "
+        "Use when anxiety spikes or a migraine makes reading hard. After a very "
+        "hard reading the bot also shows what helped you before.\n\n"
         "🔒 Privacy & quiet\n"
         "/hide — clear the last 48 hours of this chat from your screen; entries "
         "stay saved. Use when someone else might see your phone.\n"
@@ -893,6 +920,28 @@ RU: dict[str, str] = {
     "pause.bad_args": "Используй /pause 1d … /pause 14d или /pause off.",
     "cmd.hide": "Очистить этот чат (записи сохранятся)",
     "cmd.pause": "Тихий режим: пауза для сообщений бота",
+    "support.header": "Что помогало тебе раньше:",
+    "support.offer": "Хочешь немного замедлиться?",
+    "support.btn.breathe": "🫁 Подышать вместе",
+    "support.btn.ground": "🖐 Заземление 5-4-3-2-1",
+    "breathe.choose": "Выбери — каждое занимает около минуты.",
+    "breathe.title": "🫁 Квадратное дыхание · круг {round}/{total}",
+    "breathe.in": "Вдох через нос… 4",
+    "breathe.hold_in": "Мягко задержи… 4",
+    "breathe.out": "Медленный выдох… 4",
+    "breathe.hold_out": "Пауза… 4",
+    "breathe.btn.stop": "■ Стоп",
+    "breathe.done": "Хорошо. Заметь, как сейчас чувствует себя тело.",
+    "breathe.stopped": "Остановлено. Возвращайся в любой момент: /breathe.",
+    "breathe.btn.log_anxiety": "😰 Записать тревогу",
+    "ground.5": "👀 Оглянись и назови 5 вещей, которые видишь.",
+    "ground.4": "✋ Заметь 4 вещи, которых можешь коснуться или почувствовать.",
+    "ground.3": "👂 Прислушайся к 3 звукам.",
+    "ground.2": "👃 Заметь 2 запаха.",
+    "ground.1": "👅 Заметь 1 вкус.",
+    "ground.btn.next": "Готово ✓",
+    "ground.done": "Ты здесь и сейчас. Сделай один медленный вдох.",
+    "cmd.breathe": "Дыхание или заземление",
     "cmd.mood": "Записать настроение 1–10",
     "cmd.anxiety": "Записать тревогу 1–10",
     "cmd.migraine": "Приступ мигрени — начать, дополнить, закрыть",
@@ -1012,6 +1061,10 @@ RU: dict[str, str] = {
         "/checkins on|off — мягкие напоминания, когда настроение, сон "
         "или тревога выглядят необычно. Включи, если хочешь, чтобы "
         "бот сам обращался, а не ждал твоего хода.\n\n"
+        "🫁 Трудные моменты\n"
+        "/breathe — квадратное дыхание или заземление 5-4-3-2-1, только касания. "
+        "Когда накрывает тревога или из-за мигрени трудно читать. После очень "
+        "тяжёлой оценки бот также покажет, что помогало тебе раньше.\n\n"
         "🔒 Приватность и тишина\n"
         "/hide — убрать с экрана последние 48 часов чата; записи сохранятся. "
         "Когда кто-то может увидеть твой телефон.\n"

@@ -19,6 +19,7 @@ from app.bot.handlers.plain import format_readings
 from app.bot.i18n import t
 from app.bot.keyboards import entry_actions
 from app.bot.states import DayFlow
+from app.bot.support import offer_support
 from app.domain.enums import MetricType
 from app.domain.models import User
 from app.infrastructure.crypto import FernetCipher
@@ -100,6 +101,7 @@ async def on_day(
                 t(lang, "day.done", items=format_readings(pairs, lang)),
                 reply_markup=entry_actions(lang, ids, pairs),
             )
+            await offer_support(msg, user, entry_service(session, cipher), pairs)
         else:
             await msg.edit_text(t(lang, "day.done_empty"))
     await cb.answer()

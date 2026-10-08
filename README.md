@@ -45,6 +45,7 @@ The bot's `/help` lists every command with a *use-case* sentence — when to rea
 | Command | When to use |
 |---|---|
 | `/start`, `/help` | Show the full help with use cases |
+| `/breathe` | Anxiety spike or a migraine — box breathing or 5-4-3-2-1 grounding, taps only. After a very hard reading the bot also shows what helped you before (your own coping notes and best activities) |
 | `/hide` | Someone might see your phone — clears the last 48 h of this chat (entries stay saved) |
 | `/tidy on\|off` | Notes and thought records vanish from the chat 5 min after saving |
 | `/pause [1d…14d\|off]` | Quiet mode — no summaries, check-ins or migraine reminders until it ends |
