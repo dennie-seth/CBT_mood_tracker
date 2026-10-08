@@ -114,12 +114,16 @@ class EntryService:
         entry_id: int,
         user: User,
         new_extra: dict[str, Any],
+        *,
+        value_numeric: float | None = None,
     ) -> EntryDTO:
-        """Replace an entry's `extra` JSONB.
+        """Replace an entry's `extra` JSONB (and optionally its numeric value).
 
         Single mutation path. Refuses if the entry doesn't exist or belongs
         to a different user (AuthZ chokepoint). `*_text` keys are encrypted
         before persisting; the same MAX_TEXT_BYTES cap applies as in `create`.
+        `value_numeric` is left untouched unless given — episode entries
+        (migraine) revise it to the peak when they're closed.
         """
         entry = await self._repo.get_for_user(entry_id, user.id)
         if entry is None:
@@ -130,6 +134,8 @@ class EntryService:
             if k.endswith("_text") and isinstance(v, str):
                 _check_text_size(f"extra[{k}]", v)
         entry.extra = self._encrypt_extra(new_extra)
+        if value_numeric is not None:
+            entry.value_numeric = Decimal(str(value_numeric))
         return self._to_dto(entry)
 
     def _to_dto(self, e: Entry) -> EntryDTO:

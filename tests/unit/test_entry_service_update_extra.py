@@ -123,3 +123,32 @@ async def test_update_extra_enforces_text_size_cap(cipher, user) -> None:
     huge = "x" * (MAX_TEXT_BYTES + 1)
     with pytest.raises(ValueError):
         await svc.update_extra(plan.id, user, {"plan_text": "ok", "skip_reason_text": huge})
+
+
+async def test_update_extra_can_also_set_value_numeric(cipher, user) -> None:
+    """Episode-style entries (migraine) revise their numeric value when
+    closed — e.g. the peak intensity turns out higher than at onset."""
+    repo = FakeRepo()
+    svc = EntryService(repo, cipher)
+    e = await svc.create(
+        user, MetricType.MIGRAINE, value_numeric=4, extra={"status": "ongoing"}
+    )
+
+    updated = await svc.update_extra(
+        e.id, user, {"status": "ended"}, value_numeric=8
+    )
+
+    assert updated.value_numeric == 8.0
+    assert updated.extra == {"status": "ended"}
+
+
+async def test_update_extra_leaves_value_numeric_alone_by_default(cipher, user) -> None:
+    repo = FakeRepo()
+    svc = EntryService(repo, cipher)
+    e = await svc.create(
+        user, MetricType.MIGRAINE, value_numeric=6, extra={"status": "ongoing"}
+    )
+
+    updated = await svc.update_extra(e.id, user, {"status": "ended"})
+
+    assert updated.value_numeric == 6.0

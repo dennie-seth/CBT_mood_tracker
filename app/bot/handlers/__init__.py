@@ -12,6 +12,7 @@ from app.bot.handlers import (
     journal,
     lang,
     log,
+    migraine,
     quick,
     schedule,
     start,
@@ -28,6 +29,7 @@ def register_all(dp: Dispatcher) -> None:
     dp.include_router(backfill.router)
     dp.include_router(journal.router)
     dp.include_router(activate.router)
+    dp.include_router(migraine.router)
     dp.include_router(today.router)
     dp.include_router(tz.router)
     dp.include_router(lang.router)

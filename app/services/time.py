@@ -6,6 +6,7 @@ from datetime import date, datetime, timedelta
 import pytz
 
 _DAYS_AGO_RE = re.compile(r"^(\d+)\s+days?\s+ago$")
+_CLOCK_RE = re.compile(r"^(\d{1,2})[:.](\d{2})$")
 
 
 def now_in_tz(tz_name: str) -> datetime:
@@ -79,3 +80,27 @@ def parse_relative_date(raw: str, tz_name: str) -> date:
     if parsed > today:
         raise ValueError(f"date {parsed.isoformat()} is in the future; backfill is for past entries")
     return parsed
+
+
+def parse_clock_time(raw: str, now_local: datetime) -> datetime:
+    """Parse a typed 'HH:MM' (or 'H.MM') into an aware datetime in the tz of
+    `now_local`.
+
+    Means the most recent such moment: today if it's not later than now,
+    otherwise yesterday (an attack can't start in the future). Raises
+    ValueError on anything else.
+    """
+    m = _CLOCK_RE.match(raw.strip()) if isinstance(raw, str) else None
+    if not m:
+        raise ValueError(f"unrecognised time {raw!r}; use HH:MM")
+    hour, minute = int(m.group(1)), int(m.group(2))
+    if hour > 23 or minute > 59:
+        raise ValueError(f"time out of range: {raw!r}")
+    tz = now_local.tzinfo
+    naive = now_local.replace(tzinfo=None, hour=hour, minute=minute, second=0, microsecond=0)
+    if naive > now_local.replace(tzinfo=None):
+        naive -= timedelta(days=1)
+    # pytz zones need localize() to pick the right DST offset for that date.
+    if isinstance(tz, pytz.BaseTzInfo):
+        return tz.localize(naive)
+    return naive.replace(tzinfo=tz)

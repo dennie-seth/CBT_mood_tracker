@@ -35,3 +35,18 @@ class DoneFlow(StatesGroup):
 
 class SkipFlow(StatesGroup):
     enter_reason = State()
+
+
+class MigraineFlow(StatesGroup):
+    # Starting an attack
+    start_time = State()
+    intensity = State()
+    aura = State()
+    symptoms = State()
+    medication = State()
+    trigger = State()
+    # Ending it (entered via the "It's over" button)
+    end_time = State()
+    peak = State()
+    end_medication = State()
+    relief = State()

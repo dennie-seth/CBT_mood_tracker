@@ -16,3 +16,12 @@ def test_prompt_includes_timeline_guidance() -> None:
     assert "query_entries" in SYSTEM_PROMPT
     # daily_summary should be steered toward trends, not causal questions.
     assert "erases timing" in lower or "collapses a day" in lower
+
+
+def test_prompt_explains_migraine_entries() -> None:
+    lower = SYSTEM_PROMPT.lower()
+    assert "migraine" in lower
+    # The assistant should know where the episode details live and to look
+    # at the run-up to an attack for triggers.
+    assert "duration_minutes" in SYSTEM_PROMPT
+    assert "before" in lower
