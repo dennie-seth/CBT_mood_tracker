@@ -444,6 +444,13 @@ async def _relief_set(tap: _Tap) -> None:
     await tap.show_card(await tap.svc.update(tap.entry_id, tap.user, relief=tap.arg_int()))
 
 
+# Reminders
+
+@_action("mute")
+async def _mute(tap: _Tap) -> None:
+    await tap.show_card(await tap.svc.mute_reminders(tap.entry_id, tap.user))
+
+
 # Delete
 
 @_action("del")

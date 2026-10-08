@@ -15,6 +15,11 @@ class SqlUserRepository:
         result = await self._session.execute(stmt)
         return result.scalar_one_or_none()
 
+    async def list_all(self) -> list[User]:
+        """Every user — small allow-listed circle, so no paging."""
+        result = await self._session.execute(select(User).order_by(User.id))
+        return list(result.scalars().all())
+
     async def create(
         self,
         telegram_id: int,

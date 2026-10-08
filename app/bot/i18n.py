@@ -85,6 +85,12 @@ EN: dict[str, str] = {
     "skip.ask_reason": "One-line reason? (or send /cancel to skip without one)",
     "skip.saved": "Skipped. No judgement — sometimes the planning itself is the work.",
     # /migraine — attack card
+    "migraine.label": "Migraine",
+    "migraine.reminder": (
+        "Checking in gently — is this attack still going? "
+        "If it's over, tap “It's over”."
+    ),
+    "migraine.btn.mute": "🔕 Don't remind me",
     "migraine.ask_intensity": (
         "Sorry you're dealing with this. How strong is it right now? (1-10)\n"
         "It's saved as starting now — you can change the start time after."
@@ -401,6 +407,12 @@ RU: dict[str, str] = {
     "skip.pick": "Какой план пропускаем?",
     "skip.ask_reason": "Причина одной строкой? (или /cancel, чтобы пропустить без причины)",
     "skip.saved": "Пропущено. Без осуждения — иногда сама попытка спланировать уже работа.",
+    "migraine.label": "Мигрень",
+    "migraine.reminder": (
+        "Тихо напоминаю — приступ ещё идёт? "
+        "Если прошёл, нажми «Прошёл»."
+    ),
+    "migraine.btn.mute": "🔕 Не напоминать",
     "migraine.ask_intensity": (
         "Сочувствую. Насколько сильно болит сейчас? (1–10)\n"
         "Начало запишется как «сейчас» — время можно поменять потом."

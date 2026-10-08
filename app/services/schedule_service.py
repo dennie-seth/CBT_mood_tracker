@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.domain.models import User
 from app.infrastructure.repositories.schedule_repo import SqlScheduleRepository
+from app.infrastructure.repositories.user_repo import SqlUserRepository
 from app.infrastructure.schedule_models import SchedulePrefs
 
 log = structlog.get_logger(__name__)
@@ -19,6 +20,7 @@ log = structlog.get_logger(__name__)
 SummaryKind = Literal["daily", "weekly"]
 DeliveryFn = Callable[..., Awaitable[None]]
 CheckinProbeFn = Callable[..., Awaitable[None]]
+MigraineReminderFn = Callable[..., Awaitable[None]]
 
 _TIME_RE = re.compile(r"^([01]?\d|2[0-3]):([0-5]?\d)$")
 _WEEKDAY_TO_ISO: dict[str, int] = {
@@ -114,10 +116,12 @@ class SummaryScheduler:
         delivery: DeliveryFn,
         allowed_telegram_ids: frozenset[int] | None = None,
         checkin_probe: CheckinProbeFn | None = None,
+        migraine_reminder: MigraineReminderFn | None = None,
     ) -> None:
         self._sm = sessionmaker
         self._delivery = delivery
         self._checkin_probe = checkin_probe
+        self._migraine_reminder = migraine_reminder
         # `None` means "no allowlist enforcement here" — used in older tests and
         # equivalent to allowing all loaded users. Production passes the same
         # frozenset that the auth middleware uses.
@@ -131,21 +135,17 @@ class SummaryScheduler:
 
         async with self._sm() as session:
             rows = await SqlScheduleRepository(session).list_enabled()
+            # Migraine reminders aren't tied to schedule prefs — any user may
+            # have an open attack.
+            all_users = (
+                await SqlUserRepository(session).list_all()
+                if self._migraine_reminder is not None
+                else []
+            )
 
         coros: list[Awaitable[None]] = []
         for prefs, user in rows:
-            # Re-check the allowlist on every tick. The scheduler runs OUTSIDE
-            # aiogram middleware, so removing a user from ALLOWED_TELEGRAM_IDS
-            # would otherwise leave proactive Haiku summaries flowing.
-            if (
-                self._allowed_ids is not None
-                and user.telegram_id not in self._allowed_ids
-            ):
-                log.warning(
-                    "scheduler_skipping_revoked_user",
-                    telegram_id=user.telegram_id,
-                    user_id=user.id,
-                )
+            if not self._allowed(user):
                 continue
             local = now_utc.astimezone(pytz.timezone(user.timezone))
             if is_daily_due(prefs, local):
@@ -159,8 +159,36 @@ class SummaryScheduler:
             if self._checkin_probe is not None and prefs.checkins_enabled:
                 coros.append(self._safe_probe(user=user, now_utc=now_utc))
 
+        for user in all_users:
+            if self._allowed(user):
+                coros.append(self._safe_remind(user=user, now_utc=now_utc))
+
         if coros:
             await asyncio.gather(*coros, return_exceptions=False)
+
+    def _allowed(self, user: User) -> bool:
+        # Re-check the allowlist on every tick. The scheduler runs OUTSIDE
+        # aiogram middleware, so removing a user from ALLOWED_TELEGRAM_IDS
+        # would otherwise leave proactive messages flowing.
+        if self._allowed_ids is not None and user.telegram_id not in self._allowed_ids:
+            log.warning(
+                "scheduler_skipping_revoked_user",
+                telegram_id=user.telegram_id,
+                user_id=user.id,
+            )
+            return False
+        return True
+
+    async def _safe_remind(self, *, user: User, now_utc: datetime) -> None:
+        async with self._semaphore:
+            try:
+                await self._migraine_reminder(user=user, now_utc=now_utc)  # type: ignore[misc]
+            except Exception as exc:
+                log.warning(
+                    "migraine_reminder_failed",
+                    user_id=user.id,
+                    error_type=type(exc).__name__,
+                )
 
     async def _safe_deliver(self, *, user: User, kind: SummaryKind, local_today: date) -> None:
         async with self._semaphore:  # cap fan-out so a big user base can't stampede Anthropic/Telegram

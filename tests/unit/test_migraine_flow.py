@@ -378,3 +378,10 @@ async def test_card_action_clears_pending_text_step(d) -> None:
     await d.tap(f"mg:med:{i}")  # waiting for a typed medication
     await d.tap(f"mg:aura:{i}")  # user moved on
     assert await d.state.get_state() is None
+
+
+async def test_mute_button_from_reminder(d) -> None:
+    i = await d.new_attack()
+    c = await d.tap(f"mg:mute:{i}")
+    assert (await d.attack(i)).extra["reminders_muted"] is True
+    assert "ongoing" in _text(c)

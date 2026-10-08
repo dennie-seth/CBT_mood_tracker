@@ -154,6 +154,20 @@ class MigraineService:
         extra.pop("duration_minutes", None)
         return await self._save(entry_id, user, extra)
 
+    async def mark_reminded(self, entry_id: int, user: User, *, at: datetime) -> EntryDTO:
+        """Stamp an "is it over?" reminder (before sending, for idempotency)."""
+        attack = await self.get_ongoing(entry_id, user)
+        extra = dict(attack.extra or {})
+        extra["reminder_count"] = int(extra.get("reminder_count") or 0) + 1
+        extra["reminded_at"] = at.isoformat()
+        return await self._save(entry_id, user, extra)
+
+    async def mute_reminders(self, entry_id: int, user: User) -> EntryDTO:
+        attack = await self.get(entry_id, user)
+        extra = dict(attack.extra or {})
+        extra["reminders_muted"] = True
+        return await self._save(entry_id, user, extra)
+
     async def delete(self, entry_id: int, user: User) -> None:
         await self.get(entry_id, user)
         await self._entries.delete_for_user(entry_id, user)
