@@ -13,12 +13,15 @@ import matplotlib.pyplot as plt  # noqa: E402
 import pandas as pd  # noqa: E402
 from matplotlib.backends.backend_pdf import PdfPages  # noqa: E402
 
+from app.bot.i18n import t  # noqa: E402
 from app.domain.enums import METRIC_LABELS, MetricType  # noqa: E402
 from app.domain.models import User  # noqa: E402
+from app.services.migraine_stats import MigraineStats  # noqa: E402
 
 if TYPE_CHECKING:
     from app.services.therapist_export_service import (
         BAOutcome,
+        MigraineDiaryRow,
         TextEntry,
         TherapistReportData,
         ThoughtRecord,
@@ -95,7 +98,13 @@ class PdfService:
     def _metric_page(self, pdf: PdfPages, df: pd.DataFrame, col: str) -> None:
         fig, ax = plt.subplots(figsize=(8.27, 5.5))
         label = METRIC_LABELS.get(MetricType(col), col) if col in MetricType.__members__.values() else col
-        ax.plot(df.index, df[col], marker="o", linewidth=1.5)
+        if col == MetricType.MIGRAINE.value:
+            # Episodic: one bar per attack day (worst attack), gaps = no attack.
+            series = df[col].dropna()
+            ax.bar(series.index, series.values, width=0.8)
+            ax.set_ylim(0, 10)
+        else:
+            ax.plot(df.index, df[col], marker="o", linewidth=1.5)
         ax.set_title(label)
         ax.grid(True, alpha=0.3)
         ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
@@ -149,6 +158,8 @@ class PdfService:
                 self._thought_records_pages(pdf, data.thought_records)
             if data.ba_outcomes:
                 self._ba_outcomes_page(pdf, data.ba_outcomes)
+            if data.migraines:
+                self._migraine_diary_pages(pdf, data.migraines, data.migraine_stats)
             if data.notes or data.other_text:
                 self._free_text_pages(pdf, notes=data.notes, other=data.other_text)
         return buf.getvalue()
@@ -180,6 +191,7 @@ class PdfService:
             f"Thought records:        {len(data.thought_records)}\n"
             f"Behavioral activation:  {len(data.ba_outcomes)}\n"
             f"Notes / other text:     {len(data.notes) + len(data.other_text)}\n"
+            f"Migraine attacks:       {len(data.migraines)}\n"
         )
         ax.text(0.1, 0.55, body, fontsize=11, family="monospace")
         ax.text(
@@ -268,6 +280,44 @@ class PdfService:
         pdf.savefig(fig)
         plt.close(fig)
 
+    _DIARY_ROWS_PER_PAGE = 26
+
+    def _migraine_diary_pages(
+        self,
+        pdf: PdfPages,
+        rows: list[MigraineDiaryRow],
+        stats: MigraineStats | None,
+    ) -> None:
+        """Headache diary: a short summary, then one table row per attack.
+        Labels stay English like the rest of the PDF."""
+        header = ["Date", "Start", "Length", "Worst", "Aura", "Symptoms",
+                  "Medication (relief)", "Possible triggers"]
+        widths = [0.10, 0.06, 0.08, 0.06, 0.05, 0.20, 0.20, 0.25]
+        summary = _diary_summary(stats) if stats else []
+        for page, i in enumerate(range(0, len(rows), self._DIARY_ROWS_PER_PAGE)):
+            chunk = rows[i:i + self._DIARY_ROWS_PER_PAGE]
+            fig, ax = self._new_text_page(
+                "Migraine diary" if page == 0 else "Migraine diary (cont.)"
+            )
+            top = 0.90
+            if page == 0 and summary:
+                for line in summary:
+                    ax.text(0.05, top, line, fontsize=9, family="monospace")
+                    top -= 0.022
+                top -= 0.015
+            cells = [header] + [_diary_cells(r) for r in chunk]
+            height = min(top - 0.05, 0.03 * len(cells))
+            table = ax.table(
+                cellText=cells, loc="upper left", cellLoc="left",
+                bbox=[0.03, top - height, 0.94, height], colWidths=widths,
+            )
+            table.auto_set_font_size(False)
+            table.set_fontsize(6.5)
+            for j in range(len(header)):
+                table[0, j].set_text_props(weight="bold")
+            pdf.savefig(fig)
+            plt.close(fig)
+
     def _free_text_pages(
         self,
         pdf: PdfPages,
@@ -314,3 +364,48 @@ class PdfService:
         render_section("Other free-text", other)
         pdf.savefig(fig)
         plt.close(fig)
+
+
+def _fmt_minutes(minutes: int) -> str:
+    d, rem = divmod(minutes, 24 * 60)
+    h, m = divmod(rem, 60)
+    if d:
+        return f"{d}d {h}h"
+    return f"{h}h {m:02d}m" if h else f"{m}m"
+
+
+def _diary_summary(stats: MigraineStats) -> list[str]:
+    lines = [f"Attacks: {stats.attacks}    Headache days: {stats.headache_days}"]
+    if stats.avg_duration_minutes is not None and stats.longest_minutes is not None:
+        lines.append(
+            f"Typical length: {_fmt_minutes(stats.avg_duration_minutes)}    "
+            f"Longest: {_fmt_minutes(stats.longest_minutes)}"
+        )
+    if stats.avg_peak is not None:
+        lines.append(f"Average worst intensity: {stats.avg_peak}/10    Max: {stats.max_peak}/10")
+    lines.append(f"Days with acute medication logged: {stats.medication_days}")
+    for m in stats.medications[:4]:
+        relief = f", avg relief {m.avg_relief}/10" if m.avg_relief is not None else ""
+        lines.append(f"  - {textwrap.shorten(m.name, 40, placeholder='…')}: {m.attacks}x{relief}")
+    return lines
+
+
+def _diary_cells(r: MigraineDiaryRow) -> list[str]:
+    if r.duration_minutes is not None:
+        length = _fmt_minutes(int(r.duration_minutes))
+    else:
+        length = {"ongoing": "ongoing", "end_unknown": "?", "number_only": "—"}.get(r.status, "—")
+    aura = "—" if r.aura is None else ("yes" if r.aura else "no")
+    symptoms = ", ".join(t("en", f"migraine.sym.{k}") for k in r.symptoms) or "—"
+    med = r.medication or "—"
+    if r.medication and r.relief is not None:
+        med = f"{r.medication} ({r.relief}/10)"
+    triggers = [t("en", f"migraine.trg.{k}") for k in r.triggers]
+    if r.trigger_text:
+        triggers.append(f"\"{r.trigger_text}\"")
+    return [
+        r.entry_date.isoformat(), r.start_time, length, str(r.peak), aura,
+        textwrap.shorten(symptoms, 34, placeholder="…"),
+        textwrap.shorten(med, 34, placeholder="…"),
+        textwrap.shorten(", ".join(triggers) or "—", 44, placeholder="…"),
+    ]

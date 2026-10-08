@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
 import pytz
@@ -10,6 +10,7 @@ from app.domain.enums import MetricType
 from app.services.analysis_service import AnalysisService
 from app.services.chart_service import ChartService
 from app.services.entry_service import EntryService
+from app.services.migraine_stats import MigraineStats, compute_stats
 from app.services.pdf_service import PdfService
 
 
@@ -65,6 +66,26 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
             "properties": {
                 "start_date": {"type": "string"},
                 "end_date": {"type": "string"},
+            },
+            "required": ["start_date", "end_date"],
+        },
+    },
+    {
+        "name": "migraine_stats",
+        "description": (
+            "Exact migraine summary for a date range: number of attacks, "
+            "headache days, typical and longest duration, average/max peak, "
+            "aura count, symptom and trigger counts (most common first), "
+            "medications with how often each was used and average relief, and "
+            "medication_days_last_30 (days with acute medication logged in the "
+            "30 days up to today). Use this for any counting or frequency "
+            "question instead of counting raw entries yourself."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "start_date": {"type": "string", "description": "ISO date YYYY-MM-DD"},
+                "end_date": {"type": "string", "description": "ISO date YYYY-MM-DD"},
             },
             "required": ["start_date", "end_date"],
         },
@@ -134,6 +155,8 @@ class ToolDispatcher:
             return await self._query_entries(args)
         if name == "daily_summary":
             return await self._daily_summary(args)
+        if name == "migraine_stats":
+            return await self._migraine_stats(args)
         if name == "generate_chart":
             return await self._generate_chart(args)
         if name == "generate_pdf_report":
@@ -188,6 +211,23 @@ class ToolDispatcher:
                 for idx, row in df.iterrows()
             ]
         }
+
+    async def _migraine_stats(self, args: dict[str, Any]) -> dict[str, Any]:
+        start = date.fromisoformat(args["start_date"])
+        end = date.fromisoformat(args["end_date"])
+        now = datetime.now(tz=UTC)
+        today = now.astimezone(pytz.timezone(self.user_timezone)).date()
+        out = (await self._migraine_stats_for(start, end, now)).to_dict()
+        last30 = await self._migraine_stats_for(today - timedelta(days=29), today, now)
+        out["medication_days_last_30"] = last30.medication_days
+        return out
+
+    async def _migraine_stats_for(self, start: date, end: date, now: datetime) -> MigraineStats:
+        rows = await self.entry_service.list_range(
+            self.user_id, start, end, [MetricType.MIGRAINE]
+        )
+        rows = [r for r in rows if r.metric_type == MetricType.MIGRAINE]
+        return compute_stats(rows, start=start, end=end, tz_name=self.user_timezone, now=now)
 
     async def _generate_chart(self, args: dict[str, Any]) -> dict[str, Any]:
         start = date.fromisoformat(args["start_date"])

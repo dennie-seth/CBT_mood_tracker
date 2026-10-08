@@ -4,7 +4,7 @@ from datetime import date
 
 import pandas as pd
 
-from app.domain.enums import NUMERIC_METRICS
+from app.domain.enums import NUMERIC_METRICS, MetricType
 from app.domain.repositories import EntryRepository
 
 
@@ -45,7 +45,28 @@ class AnalysisService:
         )
         wide.index = pd.to_datetime(wide.index)
         wide = wide.sort_index()
+        if MetricType.MIGRAINE.value in wide.columns:
+            wide[MetricType.MIGRAINE.value] = await self._migraine_daily_max(
+                user_id, start, end, wide.index
+            )
         return wide
+
+    async def _migraine_daily_max(
+        self, user_id: int, start: date, end: date, index: pd.DatetimeIndex
+    ) -> pd.Series:
+        """Two attacks on one day should chart as the worse one — a mean
+        matches neither. Numeric values aren't encrypted, so reading rows
+        here keeps the "no decryption" property of this service."""
+        rows = await self._repo.list_range(user_id, start, end, [MetricType.MIGRAINE.value])
+        peaks: dict[date, float] = {}
+        for r in rows:
+            if r.value_numeric is not None:
+                v = float(r.value_numeric)
+                peaks[r.entry_date] = max(v, peaks.get(r.entry_date, v))
+        series = pd.Series(
+            {pd.Timestamp(d): v for d, v in peaks.items()}, dtype=float
+        )
+        return series.reindex(index)
 
     async def correlations(
         self, user_id: int, start: date, end: date

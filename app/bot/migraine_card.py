@@ -16,6 +16,7 @@ from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from app.bot.i18n import t
 from app.services.entry_service import EntryDTO
 from app.services.migraine_service import MigraineService
+from app.services.migraine_stats import MEDICATION_DAYS_FLAG, MigraineStats
 
 _STALE_AFTER = MigraineService.STALE_AFTER
 
@@ -267,3 +268,50 @@ def confirm_delete(lang: str, entry_id: int) -> InlineKeyboardMarkup:
         [_btn(lang, "migraine.btn.delete_yes", cb("dely", entry_id))],
         _back_row(lang, entry_id),
     ])
+
+
+# --- /migraines summary -------------------------------------------------------
+
+def _counted(lang: str, prefix: str, counts: dict[str, int], limit: int = 4) -> str:
+    return ", ".join(
+        f"{t(lang, f'migraine.{prefix}.{k}')} ×{n}" for k, n in list(counts.items())[:limit]
+    )
+
+
+def render_summary(stats: MigraineStats, *, med_days_last_30: int, lang: str) -> str:
+    start, end = stats.start.isoformat(), stats.end.isoformat()
+    if stats.attacks == 0:
+        return t(lang, "migraines.empty", start=start, end=end)
+    lines = [t(lang, "migraines.header", start=start, end=end), ""]
+    attacks = t(lang, "migraines.attacks", n=stats.attacks, days=stats.headache_days)
+    if stats.open_attacks:
+        attacks += t(lang, "migraines.open", n=stats.open_attacks)
+    lines.append(attacks)
+    if stats.avg_duration_minutes is not None and stats.longest_minutes is not None:
+        lines.append(t(
+            lang, "migraines.duration",
+            avg=fmt_duration(stats.avg_duration_minutes, lang),
+            longest=fmt_duration(stats.longest_minutes, lang),
+        ))
+    if stats.avg_peak is not None:
+        lines.append(t(lang, "migraines.peak", avg=stats.avg_peak, max=stats.max_peak))
+    if stats.aura:
+        lines.append(t(lang, "migraines.aura", n=stats.aura, total=stats.attacks))
+    if stats.symptoms:
+        lines.append(t(lang, "migraines.symptoms", items=_counted(lang, "sym", stats.symptoms)))
+    if stats.triggers:
+        lines.append(t(lang, "migraines.triggers", items=_counted(lang, "trg", stats.triggers)))
+    if stats.medications:
+        lines.append("")
+        lines.append(t(lang, "migraines.meds_header"))
+        for m in stats.medications:
+            line = t(lang, "migraines.med_line", name=m.name, n=m.attacks)
+            if m.avg_relief is not None:
+                line += t(lang, "migraines.med_relief", relief=m.avg_relief)
+            lines.append(line)
+    if med_days_last_30:
+        lines.append("")
+        lines.append(t(lang, "migraines.med_days", n=med_days_last_30))
+        if med_days_last_30 >= MEDICATION_DAYS_FLAG:
+            lines.append(t(lang, "migraines.med_flag"))
+    return "\n".join(lines)

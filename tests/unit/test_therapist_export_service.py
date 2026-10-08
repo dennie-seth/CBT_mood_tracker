@@ -244,3 +244,38 @@ async def test_collect_includes_numeric_daily_summary(cipher, user) -> None:
     assert not data.daily_df.empty
     assert "mood" in data.daily_df.columns
     assert "sleep_quality" in data.daily_df.columns
+
+
+async def test_collect_includes_migraine_diary_decrypted(cipher, user) -> None:
+    from app.services.migraine_service import MigraineService
+
+    repo = FakeRepo()
+    es = EntryService(repo, cipher)
+    today = date(2026, 5, 4)
+    onset = _at(today - timedelta(days=1), hour=9)
+    ms = MigraineService(es, clock=lambda: _at(today, hour=12))
+    a = await ms.start(
+        user, intensity=5, started_at=onset, aura=True, symptoms=["nausea"],
+        triggers=["sleep"], medication_text="sumatriptan 50", trigger_text="late night",
+    )
+    await ms.end(a.id, user, ended_at=onset + timedelta(hours=6), peak=8)
+    await ms.update(a.id, user, relief=7)
+
+    data = await TherapistExportService(es).collect(
+        user, start=today - timedelta(days=6), end=today
+    )
+
+    assert len(data.migraines) == 1
+    row = data.migraines[0]
+    assert row.entry_date == today - timedelta(days=1)
+    assert row.start_time == "09:00"
+    assert row.duration_minutes == 360
+    assert row.peak == 8
+    assert row.aura is True
+    assert row.symptoms == ["nausea"]
+    assert row.triggers == ["sleep"]
+    assert row.trigger_text == "late night"
+    assert row.medication == "sumatriptan 50"
+    assert row.relief == 7
+    assert data.migraine_stats is not None
+    assert data.migraine_stats.attacks == 1

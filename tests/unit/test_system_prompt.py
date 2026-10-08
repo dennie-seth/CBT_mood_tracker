@@ -25,3 +25,12 @@ def test_prompt_explains_migraine_entries() -> None:
     # at the run-up to an attack for triggers.
     assert "duration_minutes" in SYSTEM_PROMPT
     assert "before" in lower
+
+
+def test_prompt_mentions_migraine_stats_tool_and_medication_guidance() -> None:
+    assert "migraine_stats" in SYSTEM_PROMPT
+    assert "peak_intensity" in SYSTEM_PROMPT
+    assert "triggers" in SYSTEM_PROMPT
+    lower = SYSTEM_PROMPT.lower()
+    assert "doctor" in lower
+    assert "dosing" in lower  # never give dosing advice

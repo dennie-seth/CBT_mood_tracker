@@ -8,6 +8,7 @@ from typing import Any, Final
 from app.domain.enums import MetricType
 from app.domain.models import User
 from app.services.entry_service import EntryDTO, EntryService
+from app.services.migraine_stats import MigraineStats, compute_stats
 
 # Stable keys stored in extra; labels live in i18n
 # ("migraine.sym.<key>" / "migraine.trg.<key>").
@@ -259,6 +260,18 @@ class MigraineService:
         """Most recent attack logged via /migraine (open or ended)."""
         rows = [r for r in await self._recent(user_id, today) if (r.extra or {}).get("status")]
         return rows[-1] if rows else None
+
+    async def stats(
+        self, user_id: int, *, start: date, end: date, tz_name: str
+    ) -> MigraineStats:
+        rows = await self._entries.list_range(user_id, start, end, [MetricType.MIGRAINE])
+        return compute_stats(rows, start=start, end=end, tz_name=tz_name, now=self._now())
+
+    async def first_attack_date(self, user_id: int, *, today: date) -> date | None:
+        rows = await self._entries.list_range(
+            user_id, date(1970, 1, 1), today, [MetricType.MIGRAINE]
+        )
+        return min((r.entry_date for r in rows), default=None)
 
     def is_stale(self, attack: EntryDTO) -> bool:
         """Open for so long (>72h) it was most likely forgotten."""

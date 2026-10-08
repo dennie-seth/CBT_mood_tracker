@@ -108,3 +108,30 @@ def test_therapist_report_renders_qualitative_only_payload(user) -> None:
         data, user=user, start=date(2026, 4, 24), end=date(2026, 4, 30)
     )
     assert out.startswith(b"%PDF")
+
+
+def test_therapist_report_renders_migraine_diary(user) -> None:
+    from app.services.migraine_stats import MigraineStats
+    from app.services.therapist_export_service import MigraineDiaryRow
+
+    rows = [
+        MigraineDiaryRow(
+            entry_date=date(2026, 4, 20 + i % 10), start_time="09:00",
+            duration_minutes=300 if i % 3 else None, status="ended",
+            peak=6 + i % 4, aura=bool(i % 2), symptoms=["nausea", "light"],
+            triggers=["sleep"], trigger_text="late night" if i % 2 else None,
+            medication="sumatriptan 50" if i % 2 else None, relief=7 if i % 2 else None,
+        )
+        for i in range(40)  # forces a second diary page
+    ]
+    stats = MigraineStats(start=date(2026, 4, 1), end=date(2026, 4, 30), attacks=40,
+                          headache_days=12, avg_duration_minutes=300, longest_minutes=300,
+                          avg_peak=7.5, max_peak=9, medication_days=10)
+    base = TherapistReportData(daily_df=pd.DataFrame())
+    with_diary = TherapistReportData(
+        daily_df=pd.DataFrame(), migraines=rows, migraine_stats=stats
+    )
+    plain = PdfService().therapist_report(base, user=user, start=date(2026, 4, 1), end=date(2026, 4, 30))
+    out = PdfService().therapist_report(with_diary, user=user, start=date(2026, 4, 1), end=date(2026, 4, 30))
+    assert out.startswith(b"%PDF")
+    assert len(out) > len(plain) + 5_000

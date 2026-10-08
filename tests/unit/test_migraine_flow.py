@@ -385,3 +385,37 @@ async def test_mute_button_from_reminder(d) -> None:
     c = await d.tap(f"mg:mute:{i}")
     assert (await d.attack(i)).extra["reminders_muted"] is True
     assert "ongoing" in _text(c)
+
+
+
+async def test_migraines_summary_command(d) -> None:
+    i = await d.new_attack(7)
+    await d.tap(f"mg:sym:{i}")
+    await d.tap(f"mg:sy:{i}:nausea")
+    await d.tap(f"mg:med:{i}")
+    await d.say("ibuprofen 400")
+    await d.tap(f"mg:start:{i}")
+    await d.tap(f"mg:st:{i}:240")
+    await d.tap(f"mg:over:{i}")
+    await d.tap(f"mg:end:{i}:0")
+    await d.tap(f"mg:rlc:{i}:6")
+
+    m = _msg("/migraines")
+    command = MagicMock(args=None)
+    await h.cmd_migraines(m, command, d.user, None, d.cipher)
+    out = _text(m)
+    assert "Attacks: 1" in out
+    assert "Nausea" in out
+    assert "ibuprofen 400" in out and "6" in out
+
+
+async def test_migraines_summary_empty(d) -> None:
+    m = _msg("/migraines")
+    await h.cmd_migraines(m, MagicMock(args="7d"), d.user, None, d.cipher)
+    assert "No migraine attacks" in _text(m)
+
+
+async def test_migraines_summary_bad_period(d) -> None:
+    m = _msg("/migraines")
+    await h.cmd_migraines(m, MagicMock(args="lots"), d.user, None, d.cipher)
+    assert "7d" in _text(m)

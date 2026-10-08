@@ -10,14 +10,14 @@ from __future__ import annotations
 
 import contextlib
 from collections.abc import Awaitable, Callable
-from dataclasses import dataclass, field
-from datetime import UTC, datetime, timedelta
+from dataclasses import dataclass, field, replace
+from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
 import structlog
 from aiogram import Bot, F, Router
 from aiogram.exceptions import TelegramBadRequest
-from aiogram.filters import Command
+from aiogram.filters import Command, CommandObject
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State
 from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message
@@ -37,7 +37,7 @@ from app.services.migraine_service import (
     MigraineErrorCode,
     MigraineService,
 )
-from app.services.time import now_in_tz, parse_moment, today_in_tz
+from app.services.time import now_in_tz, parse_moment, parse_period, today_in_tz
 
 router = Router()
 log = structlog.get_logger(__name__)
@@ -114,6 +114,30 @@ async def cmd_migraine(
                 )],
             ])
         await message.answer(text, reply_markup=kb)
+
+
+@router.message(Command("migraines"))
+async def cmd_migraines(
+    message: Message, command: CommandObject, user: User,
+    session: AsyncSession, cipher: FernetCipher,
+) -> None:
+    try:
+        start, end = parse_period(command.args or "30d", user.timezone)
+    except ValueError:
+        await message.answer(t(user.language, "migraines.bad_period"))
+        return
+    svc = _svc(session, cipher)
+    stats = await svc.stats(user.id, start=start, end=end, tz_name=user.timezone)
+    if start == date(1970, 1, 1) and stats.attacks:
+        # "all": show the real first day instead of the epoch sentinel.
+        first = await svc.first_attack_date(user.id, today=end)
+        stats = replace(stats, start=first or start)
+    last30 = await svc.stats(
+        user.id, start=end - timedelta(days=29), end=end, tz_name=user.timezone
+    )
+    await message.answer(card.render_summary(
+        stats, med_days_last_30=last30.medication_days, lang=user.language
+    ))
 
 
 # --- card buttons --------------------------------------------------------------

@@ -85,6 +85,24 @@ EN: dict[str, str] = {
     "skip.ask_reason": "One-line reason? (or send /cancel to skip without one)",
     "skip.saved": "Skipped. No judgement — sometimes the planning itself is the work.",
     # /migraine — attack card
+    "migraines.header": "Migraines, {start} → {end}",
+    "migraines.empty": "No migraine attacks logged between {start} and {end}.",
+    "migraines.bad_period": "Use /migraines 7d, 30d, 90d or all.",
+    "migraines.attacks": "Attacks: {n} · headache days: {days}",
+    "migraines.open": " ({n} still open)",
+    "migraines.duration": "Typical length: {avg} (longest {longest})",
+    "migraines.peak": "Average worst: {avg}/10 (max {max}/10)",
+    "migraines.aura": "Aura: in {n} of {total}",
+    "migraines.symptoms": "Common symptoms: {items}",
+    "migraines.triggers": "Possible triggers: {items}",
+    "migraines.meds_header": "Medication:",
+    "migraines.med_line": "• {name} — {n}×",
+    "migraines.med_relief": " · helped {relief}/10 on average",
+    "migraines.med_days": "Acute medication logged on {n} of the last 30 days.",
+    "migraines.med_flag": (
+        "Taking acute medication this often can itself make headaches more "
+        "frequent — it's worth mentioning to your doctor."
+    ),
     "migraine.label": "Migraine",
     "migraine.reminder": (
         "Checking in gently — is this attack still going? "
@@ -299,7 +317,10 @@ EN: dict[str, str] = {
         "optional buttons for start time, aura, symptoms, medication, "
         "triggers and \"It's over\", and you can change any of them later. "
         "Use when an attack starts — or afterwards to log one that already "
-        "passed (times like 'yesterday 22:00' work).\n\n"
+        "passed (times like 'yesterday 22:00' work).\n"
+        "/migraines [7d|30d|90d|all] — attacks, headache days, typical length, "
+        "triggers and which medication helps. Use before a doctor's "
+        "appointment or to see whether things are changing.\n\n"
         "🌱 Behavioral activation\n"
         "/activate — plan a small mood-lifting activity and predict its "
         "lift. Use when you feel low and want a concrete step out of it.\n"
@@ -407,6 +428,24 @@ RU: dict[str, str] = {
     "skip.pick": "Какой план пропускаем?",
     "skip.ask_reason": "Причина одной строкой? (или /cancel, чтобы пропустить без причины)",
     "skip.saved": "Пропущено. Без осуждения — иногда сама попытка спланировать уже работа.",
+    "migraines.header": "Мигрени, {start} → {end}",
+    "migraines.empty": "Между {start} и {end} приступов мигрени не записано.",
+    "migraines.bad_period": "Используй /migraines 7d, 30d, 90d или all.",
+    "migraines.attacks": "Приступов: {n} · дней с головной болью: {days}",
+    "migraines.open": " (ещё открыто: {n})",
+    "migraines.duration": "Обычная длительность: {avg} (самый долгий {longest})",
+    "migraines.peak": "Средний максимум: {avg}/10 (наибольший {max}/10)",
+    "migraines.aura": "Аура: в {n} из {total}",
+    "migraines.symptoms": "Частые симптомы: {items}",
+    "migraines.triggers": "Возможные триггеры: {items}",
+    "migraines.meds_header": "Лекарства:",
+    "migraines.med_line": "• {name} — {n}×",
+    "migraines.med_relief": " · в среднем помогло на {relief}/10",
+    "migraines.med_days": "Обезболивающие записаны в {n} из последних 30 дней.",
+    "migraines.med_flag": (
+        "Если принимать обезболивающие так часто, головные боли сами могут "
+        "становиться чаще — об этом стоит рассказать врачу."
+    ),
     "migraine.label": "Мигрень",
     "migraine.reminder": (
         "Тихо напоминаю — приступ ещё идёт? "
@@ -613,7 +652,10 @@ RU: dict[str, str] = {
         "необязательные кнопки: начало, аура, симптомы, лекарство, "
         "триггеры и «Прошёл», и всё можно поменять позже. Когда приступ "
         "начался — или уже после, чтобы записать прошедший (подойдёт "
-        "время вроде «вчера 22:00»).\n\n"
+        "время вроде «вчера 22:00»).\n"
+        "/migraines [7d|30d|90d|all] — приступы, дни с болью, обычная "
+        "длительность, триггеры и какое лекарство помогает. Перед визитом "
+        "к врачу или чтобы увидеть, меняется ли что-то.\n\n"
         "🌱 Поведенческая активация\n"
         "/activate — запланировать маленькое действие и спрогнозировать "
         "его эффект. Когда настроение низкое и нужен конкретный шаг.\n"

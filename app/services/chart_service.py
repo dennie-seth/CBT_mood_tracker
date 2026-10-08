@@ -34,7 +34,12 @@ class ChartService:
         fig, ax = plt.subplots(figsize=(10, 5))
         for c in cols:
             label = METRIC_LABELS.get(MetricType(c), c)
-            ax.plot(df.index, df[c], marker="o", linewidth=1.5, label=label)
+            if c == MetricType.MIGRAINE.value:
+                # Episodic: days without an attack are gaps, not missing data,
+                # so mark attack days instead of joining them with a line.
+                ax.scatter(df.index, df[c], marker="v", s=70, zorder=3, label=label)
+            else:
+                ax.plot(df.index, df[c], marker="o", linewidth=1.5, label=label)
 
         ax.set_title("CBT tracker — daily averages")
         ax.set_ylabel("value")
