@@ -58,6 +58,16 @@ class SchedulePrefs(Base):
         DateTime(timezone=True), nullable=True
     )
 
+    # Quiet mode: no proactive messages at all until this moment (UTC).
+    paused_until: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    # Auto-tidy: delete notes / thought records from the chat a few minutes
+    # after saving (the entries themselves stay).
+    tidy_enabled: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
+
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

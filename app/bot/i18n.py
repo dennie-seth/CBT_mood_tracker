@@ -359,6 +359,40 @@ EN: dict[str, str] = {
     "recent.btn.card": "🤕 Open attack card",
     "cmd.day": "Rate my day: mood, energy, anxiety, sleep",
     "cmd.recent": "Fix or delete recent entries",
+    # /hide, /tidy, /pause
+    "hide.confirm": (
+        "This removes the last 48 hours of this chat from your screen "
+        "(Telegram doesn't let bots delete older messages). Your saved entries "
+        "stay — /today and /recent still show them."
+    ),
+    "hide.btn.yes": "🧹 Clear chat",
+    "hide.btn.no": "Cancel",
+    "hide.done": "Cleared. Your entries are still saved.",
+    "hide.cancelled": "Okay, nothing removed.",
+    "tidy.on": (
+        "Auto-tidy is on: notes and thought records disappear from this chat "
+        "5 minutes after saving. They stay saved. /tidy off to stop."
+    ),
+    "tidy.off": "Auto-tidy is off.",
+    "tidy.status_on": "Auto-tidy is on. /tidy off to stop.",
+    "tidy.status_off": (
+        "Auto-tidy is off. /tidy on makes notes and thought records disappear "
+        "from the chat 5 minutes after saving (they stay saved)."
+    ),
+    "pause.ask": (
+        "Pause every message the bot sends on its own — summaries, check-ins, "
+        "migraine reminders? Everything else keeps working."
+    ),
+    "pause.btn.1": "1 day",
+    "pause.btn.3": "3 days",
+    "pause.btn.7": "1 week",
+    "pause.btn.resume": "▶ Resume now",
+    "pause.set": "Paused until {until}. Take care of yourself.",
+    "pause.resumed": "Resumed — the bot's own messages are back on.",
+    "pause.status": "Paused until {until}.",
+    "pause.bad_args": "Use /pause 1d … /pause 14d, or /pause off.",
+    "cmd.hide": "Clear this chat (entries stay saved)",
+    "cmd.pause": "Quiet mode: pause the bot's own messages",
     # Command menu (Telegram "/" list)
     "cmd.mood": "Log mood 1-10",
     "cmd.anxiety": "Log anxiety 1-10",
@@ -484,6 +518,13 @@ EN: dict[str, str] = {
         "/checkins on|off — proactive nudges when mood, sleep or "
         "anxiety look unusual. Enable if you want the bot to reach "
         "out instead of waiting for your move.\n\n"
+        "🔒 Privacy & quiet\n"
+        "/hide — clear the last 48 hours of this chat from your screen; entries "
+        "stay saved. Use when someone else might see your phone.\n"
+        "/tidy on|off — notes and thought records disappear from the chat 5 "
+        "minutes after saving. Use if you'd rather not leave them on screen.\n"
+        "/pause [1d…14d|off] — quiet mode: no summaries, check-ins or reminders "
+        "until it ends. Use on days when any notification is too much.\n\n"
         "⚙️ Settings\n"
         "/tz <IANA> — set your timezone, e.g. /tz Europe/Berlin. "
         "Use once on first login; day boundaries depend on it.\n"
@@ -819,6 +860,39 @@ RU: dict[str, str] = {
     "recent.btn.card": "🤕 Открыть карточку приступа",
     "cmd.day": "Оценить день: настроение, энергия, тревога, сон",
     "cmd.recent": "Исправить или удалить недавние записи",
+    "hide.confirm": (
+        "Это уберёт с экрана последние 48 часов этого чата (более старые "
+        "сообщения Telegram удалять ботам не даёт). Записи останутся — /today "
+        "и /recent их покажут."
+    ),
+    "hide.btn.yes": "🧹 Очистить чат",
+    "hide.btn.no": "Отмена",
+    "hide.done": "Очищено. Записи сохранены.",
+    "hide.cancelled": "Хорошо, ничего не удаляю.",
+    "tidy.on": (
+        "Автоочистка включена: заметки и записи мыслей исчезают из чата через "
+        "5 минут после сохранения. Сами записи остаются. /tidy off — выключить."
+    ),
+    "tidy.off": "Автоочистка выключена.",
+    "tidy.status_on": "Автоочистка включена. /tidy off — выключить.",
+    "tidy.status_off": (
+        "Автоочистка выключена. /tidy on — заметки и записи мыслей будут "
+        "исчезать из чата через 5 минут после сохранения (сами записи остаются)."
+    ),
+    "pause.ask": (
+        "Поставить на паузу всё, что бот присылает сам — сводки, проверки, "
+        "напоминания о мигрени? Остальное продолжит работать."
+    ),
+    "pause.btn.1": "1 день",
+    "pause.btn.3": "3 дня",
+    "pause.btn.7": "1 неделю",
+    "pause.btn.resume": "▶ Возобновить",
+    "pause.set": "Пауза до {until}. Береги себя.",
+    "pause.resumed": "Возобновлено — бот снова пишет сам.",
+    "pause.status": "Пауза до {until}.",
+    "pause.bad_args": "Используй /pause 1d … /pause 14d или /pause off.",
+    "cmd.hide": "Очистить этот чат (записи сохранятся)",
+    "cmd.pause": "Тихий режим: пауза для сообщений бота",
     "cmd.mood": "Записать настроение 1–10",
     "cmd.anxiety": "Записать тревогу 1–10",
     "cmd.migraine": "Приступ мигрени — начать, дополнить, закрыть",
@@ -938,6 +1012,13 @@ RU: dict[str, str] = {
         "/checkins on|off — мягкие напоминания, когда настроение, сон "
         "или тревога выглядят необычно. Включи, если хочешь, чтобы "
         "бот сам обращался, а не ждал твоего хода.\n\n"
+        "🔒 Приватность и тишина\n"
+        "/hide — убрать с экрана последние 48 часов чата; записи сохранятся. "
+        "Когда кто-то может увидеть твой телефон.\n"
+        "/tidy on|off — заметки и записи мыслей исчезают из чата через 5 минут "
+        "после сохранения. Если не хочешь оставлять их на экране.\n"
+        "/pause [1d…14d|off] — тихий режим: без сводок, проверок и напоминаний, "
+        "пока не закончится. В дни, когда любое уведомление — слишком.\n\n"
         "⚙️ Настройки\n"
         "/tz <IANA> — часовой пояс, например /tz Europe/Berlin. "
         "Один раз при первом входе; границы дня зависят от него.\n"

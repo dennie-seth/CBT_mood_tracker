@@ -20,7 +20,7 @@ MENU: tuple[str, ...] = (
     "mood", "anxiety", "day", "migraine", "note", "thought", "today", "week", "ask",
     "recent",
     "log", "activate", "done", "chart", "migraines", "therapist",
-    "home", "lang", "help", "cancel",
+    "hide", "pause", "home", "lang", "help", "cancel",
 )
 
 

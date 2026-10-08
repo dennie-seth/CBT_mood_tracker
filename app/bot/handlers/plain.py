@@ -18,6 +18,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.bot.chat_cleanup import maybe_tidy
 from app.bot.deps import entry_service
 from app.bot.handlers.ask import run_ask
 from app.bot.i18n import t
@@ -65,7 +66,7 @@ async def plain_text(
         return
 
     await state.set_state(PlainTextFlow.pending)
-    await state.set_data({"pending_text": text})
+    await state.set_data({"pending_text": text, "first_id": message.message_id})
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(text=t(lang, "plain.btn.note"), callback_data="pt:note"),
@@ -86,11 +87,13 @@ async def on_plain_choice(
 ) -> None:
     lang = user.language
     choice = (cb.data or "").split(":", 1)[1]
-    pending = (
-        (await state.get_data()).get("pending_text")
+    data = (
+        await state.get_data()
         if await state.get_state() == PlainTextFlow.pending.state
-        else None
+        else {}
     )
+    pending = data.get("pending_text")
+    first_id = data.get("first_id")
     if not pending:
         await cb.answer(t(lang, "plain.expired"), show_alert=True)
         return
@@ -106,9 +109,11 @@ async def on_plain_choice(
                 t(lang, "note.saved", date=dto.entry_date.isoformat()),
                 reply_markup=entry_actions(lang, [dto.id]),
             )
+            await maybe_tidy(cb.bot, session, user, chat_id=msg.chat.id,
+                             first_id=first_id, last_id=msg.message_id)
     elif choice == "thought":
         await state.set_state(ThoughtFlow.automatic_thought)
-        await state.update_data(situation_text=pending)
+        await state.update_data(situation_text=pending, first_id=first_id)
         if msg:
             await msg.edit_text(t(lang, "thought.ask_auto"))
     elif choice == "ask":

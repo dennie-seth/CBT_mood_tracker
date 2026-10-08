@@ -5,9 +5,11 @@ import asyncio
 import structlog
 from aiogram import Bot, Dispatcher
 
+from app.bot import chat_cleanup
 from app.bot.commands import setup_default_menu
 from app.bot.handlers import register_all
 from app.bot.middlewares.auth import AllowlistMiddleware
+from app.bot.middlewares.chat_log import IncomingChatLogMiddleware, OutgoingChatLogMiddleware
 from app.bot.middlewares.context import ContextMiddleware
 from app.bot.middlewares.db import DbSessionMiddleware
 from app.bot.middlewares.user_ctx import UserContextMiddleware
@@ -78,6 +80,10 @@ async def main() -> None:
     dp.update.outer_middleware(ContextMiddleware(container))
     dp.update.outer_middleware(DbSessionMiddleware(container.sessionmaker))
     dp.update.outer_middleware(UserContextMiddleware(settings))
+    # Ids only (no content), private chats, 48h — for /hide and /tidy.
+    dp.message.outer_middleware(IncomingChatLogMiddleware(container.sessionmaker))
+    bot.session.middleware(OutgoingChatLogMiddleware(container.sessionmaker))
+    chat_cleanup.configure(container.sessionmaker)
 
     register_all(dp)
 

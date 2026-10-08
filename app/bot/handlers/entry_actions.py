@@ -51,7 +51,8 @@ async def on_entry_action(
         await state.clear()
         await state.set_state(JournalFlow.enter_text)
         if isinstance(cb.message, Message):
-            await cb.message.answer(t(lang, "entry.note_prompt"))
+            prompt = await cb.message.answer(t(lang, "entry.note_prompt"))
+            await state.set_data({"first_id": prompt.message_id})
         await cb.answer()
         return
 
@@ -59,7 +60,8 @@ async def on_entry_action(
         await state.clear()
         await state.set_state(ThoughtFlow.situation)
         if isinstance(cb.message, Message):
-            await cb.message.answer(t(lang, "thought.start"))
+            prompt = await cb.message.answer(t(lang, "thought.start"))
+            await state.set_data({"first_id": prompt.message_id})
         await cb.answer()
         return
 

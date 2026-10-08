@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from app.domain.models import User
+from app.infrastructure.chat_log_models import ChatMessage
 from app.infrastructure.crypto import FernetCipher
 from app.infrastructure.fsm_models import FsmState
 from app.infrastructure.schedule_models import SchedulePrefs
@@ -55,6 +56,7 @@ async def schedule_sm() -> AsyncIterator[async_sessionmaker[AsyncSession]]:
         await conn.run_sync(User.__table__.create)
         await conn.run_sync(SchedulePrefs.__table__.create)
         await conn.run_sync(WeeklySummary.__table__.create)
+        await conn.run_sync(ChatMessage.__table__.create)
     sm = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
     try:
         yield sm

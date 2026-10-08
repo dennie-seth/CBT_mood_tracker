@@ -6,6 +6,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.bot.chat_cleanup import maybe_tidy
 from app.bot.deps import entry_service
 from app.bot.i18n import t
 from app.bot.keyboards import entry_actions
@@ -29,12 +30,15 @@ async def cmd_note(
     if command.args:
         svc = entry_service(session, cipher)
         dto = await svc.create(user, MetricType.NOTE, value_text=command.args.strip())
-        await message.answer(
+        reply = await message.answer(
             t(user.language, "note.saved", date=dto.entry_date.isoformat()),
             reply_markup=entry_actions(user.language, [dto.id]),
         )
+        await maybe_tidy(message.bot, session, user, chat_id=message.chat.id,
+                         first_id=message.message_id, last_id=reply.message_id)
         return
     await state.set_state(JournalFlow.enter_text)
+    await state.set_data({"first_id": message.message_id})
     await message.answer(t(user.language, "note.send"))
 
 
@@ -51,16 +55,20 @@ async def journal_text(
         return
     svc = entry_service(session, cipher)
     dto = await svc.create(user, MetricType.NOTE, value_text=message.text.strip())
+    first_id = (await state.get_data()).get("first_id", message.message_id)
     await state.clear()
-    await message.answer(
+    reply = await message.answer(
         t(user.language, "note.saved", date=dto.entry_date.isoformat()),
         reply_markup=entry_actions(user.language, [dto.id]),
     )
+    await maybe_tidy(message.bot, session, user, chat_id=message.chat.id,
+                     first_id=first_id, last_id=reply.message_id)
 
 
 @router.message(Command("thought"))
 async def cmd_thought(message: Message, state: FSMContext, user: User) -> None:
     await state.set_state(ThoughtFlow.situation)
+    await state.set_data({"first_id": message.message_id})
     await message.answer(t(user.language, "thought.start"))
 
 
@@ -148,6 +156,8 @@ async def thought_reframe(
     svc = entry_service(session, cipher)
     dto = await svc.create(user, MetricType.THOUGHT_RECORD, extra=extra)
     await state.clear()
-    await message.answer(
+    reply = await message.answer(
         t(user.language, "thought.saved", date=dto.entry_date.isoformat())
     )
+    await maybe_tidy(message.bot, session, user, chat_id=message.chat.id,
+                     first_id=data.get("first_id", message.message_id), last_id=reply.message_id)

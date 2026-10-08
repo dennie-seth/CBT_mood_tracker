@@ -17,6 +17,7 @@ from app.bot.handlers import (
     log,
     migraine,
     plain,
+    privacy,
     quick,
     recent,
     schedule,
@@ -31,6 +32,7 @@ def register_all(dp: Dispatcher) -> None:
     dp.include_router(start.router)
     dp.include_router(home.router)  # before flows: shortcut taps win
     dp.include_router(entry_actions.router)
+    dp.include_router(privacy.router)
     dp.include_router(quick.router)  # quick shortcuts before generic /log
     dp.include_router(log.router)
     dp.include_router(backfill.router)
