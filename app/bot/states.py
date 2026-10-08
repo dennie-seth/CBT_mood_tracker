@@ -44,3 +44,23 @@ class MigraineFlow(StatesGroup):
     typed_time = State()
     medication = State()
     trigger_text = State()
+
+
+class PlainTextFlow(StatesGroup):
+    # Free text sent outside any command, waiting for "note / thought / ask".
+    # The text sits in FSM data (encrypted at rest by PgFsmStorage), never in
+    # callback data.
+    pending = State()
+
+
+class AskFlow(StatesGroup):
+    question = State()
+
+
+class DayFlow(StatesGroup):
+    # Data: step (index into DAY_METRICS), ids, readings.
+    active = State()
+
+
+class RecentFlow(StatesGroup):
+    edit_text = State()  # data: entry_id, prompt_id

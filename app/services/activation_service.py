@@ -1,10 +1,28 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import date, datetime, timezone
 
 from app.domain.enums import MetricType
 from app.domain.models import User
 from app.services.entry_service import EntryDTO, EntryService
+
+
+@dataclass(frozen=True, slots=True)
+class Calibration:
+    """How actual "how much it helped" ratings compare with predictions.
+
+    `delta` > 0: activities helped more than expected (the usual pattern
+    when mood is low). `specific`: based on the same activity, not overall.
+    """
+
+    delta: float
+    n: int
+    specific: bool
+
+
+def _norm(text: str) -> str:
+    return " ".join(text.lower().split())
 
 
 class ActivationService:
@@ -32,6 +50,36 @@ class ActivationService:
             r for r in rows
             if (r.extra or {}).get("status") == "scheduled"
         ]
+
+    CALIBRATION_DAYS = 90
+    MIN_OVERALL = 3
+    MIN_SPECIFIC = 2
+    MIN_DELTA = 1.0
+
+    async def calibration(
+        self, user_id: int, *, today: date, plan_text: str
+    ) -> Calibration | None:
+        """Prediction-vs-actual summary to show when planning. None when there
+        isn't enough history or predictions are already about right."""
+        start = date.fromordinal(today.toordinal() - self.CALIBRATION_DAYS)
+        rows = await self._entries.list_range(user_id, start, today, [MetricType.ACTIVITY_PLAN])
+        pairs: list[tuple[str, int]] = []
+        for r in rows:
+            x = r.extra or {}
+            if x.get("status") == "done" and x.get("predicted_effect") is not None                     and x.get("actual_effect") is not None:
+                pairs.append((_norm(x.get("plan_text", "")),
+                              int(x["actual_effect"]) - int(x["predicted_effect"])))
+        same = [d for text, d in pairs if text == _norm(plan_text)]
+        if len(same) >= self.MIN_SPECIFIC:
+            deltas, specific = same, True
+        elif len(pairs) >= self.MIN_OVERALL:
+            deltas, specific = [d for _, d in pairs], False
+        else:
+            return None
+        delta = sum(deltas) / len(deltas)
+        if abs(delta) < self.MIN_DELTA:
+            return None
+        return Calibration(delta=round(delta, 1), n=len(deltas), specific=specific)
 
     async def mark_done(
         self, entry_id: int, user: User, *, actual_effect: int

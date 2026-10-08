@@ -16,7 +16,7 @@ from app.domain.enums import MetricType
 from app.domain.models import User
 from app.infrastructure.crypto import FernetCipher
 from app.infrastructure.repositories.entry_repo import SqlEntryRepository
-from app.services.activation_service import ActivationService
+from app.services.activation_service import ActivationService, Calibration
 from app.services.entry_service import EntryService
 from app.services.time import today_in_tz
 
@@ -52,11 +52,21 @@ async def activate_plan_text(
     )
 
 
+def _calibration_hint(cal: Calibration | None, lang: str) -> str:
+    if cal is None:
+        return ""
+    direction = "more" if cal.delta > 0 else "less"
+    scope = "specific" if cal.specific else "overall"
+    return t(lang, f"activate.hint_{direction}_{scope}", delta=f"{abs(cal.delta):g}", n=cal.n)
+
+
 @router.callback_query(ActivateFlow.pick_when, F.data.startswith("plan_when:"))
 async def activate_pick_when(
     cb: CallbackQuery,
     state: FSMContext,
     user: User,
+    session: AsyncSession,
+    cipher: FernetCipher,
 ) -> None:
     if cb.data is None or cb.message is None:
         return
@@ -64,8 +74,13 @@ async def activate_pick_when(
     target = today_in_tz(user.timezone) + timedelta(days=offset)
     await state.update_data(planned_for=target.isoformat())
     await state.set_state(ActivateFlow.pick_predicted_effect)
+    data = await state.get_data()
+    calibration = await _activation_service(session, cipher).calibration(
+        user.id, today=today_in_tz(user.timezone), plan_text=data.get("plan_text", "")
+    )
     await cb.message.edit_text(
-        t(user.language, "activate.ask_predicted", date=target.isoformat()),
+        t(user.language, "activate.ask_predicted", date=target.isoformat(),
+          hint=_calibration_hint(calibration, user.language)),
         reply_markup=scale_1_to_10("plan_pred"),
     )
     await cb.answer()

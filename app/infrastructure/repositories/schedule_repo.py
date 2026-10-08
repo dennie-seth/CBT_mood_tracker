@@ -135,6 +135,31 @@ class SqlScheduleRepository:
         prefs.checkins_last_sent_at = at
         prefs.updated_at = datetime.now(tz=timezone.utc)
 
+    async def set_pause(self, user_id: int, *, until: datetime | None) -> SchedulePrefs:
+        prefs = await self._get_or_create(user_id)
+        prefs.paused_until = until.astimezone(timezone.utc) if until else None
+        prefs.updated_at = datetime.now(tz=timezone.utc)
+        return prefs
+
+    async def paused_user_ids(self, now: datetime) -> set[int]:
+        result = await self._session.execute(
+            select(SchedulePrefs.user_id).where(
+                SchedulePrefs.paused_until.is_not(None),
+                SchedulePrefs.paused_until > now.astimezone(timezone.utc),
+            )
+        )
+        return set(result.scalars().all())
+
+    async def set_tidy(self, user_id: int, *, enabled: bool) -> SchedulePrefs:
+        prefs = await self._get_or_create(user_id)
+        prefs.tidy_enabled = enabled
+        prefs.updated_at = datetime.now(tz=timezone.utc)
+        return prefs
+
+    async def tidy_enabled(self, user_id: int) -> bool:
+        prefs = await self.get(user_id)
+        return bool(prefs and prefs.tidy_enabled)
+
     async def _get_or_create(self, user_id: int) -> SchedulePrefs:
         prefs = await self.get(user_id)
         if prefs is None:

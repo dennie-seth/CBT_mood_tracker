@@ -142,6 +142,30 @@ class EntryService:
             entry.recorded_at, entry.entry_date = _bucket(recorded_at, user)
         return self._to_dto(entry)
 
+    async def update_value(
+        self,
+        entry_id: int,
+        user: User,
+        *,
+        value_numeric: float | None = None,
+        value_text: str | None = None,
+    ) -> EntryDTO:
+        """Correct a logged value (from /recent). Numeric only for numeric
+        metrics, text only for text metrics; same ownership check, size cap
+        and encryption as everywhere else."""
+        entry = await self._owned(entry_id, user)
+        metric = MetricType(entry.metric_type)
+        if value_numeric is not None:
+            if metric not in NUMERIC_METRICS:
+                raise ValueError(f"{metric} has no numeric value")
+            entry.value_numeric = Decimal(str(value_numeric))
+        if value_text is not None:
+            if metric not in TEXT_METRICS or not value_text.strip():
+                raise ValueError(f"{metric} has no editable text")
+            _check_text_size("value_text", value_text)
+            entry.value_text_encrypted = self._cipher.encrypt(value_text.strip())
+        return self._to_dto(entry)
+
     async def delete_for_user(self, entry_id: int, user: User) -> None:
         """Hard-delete one entry. Same AuthZ chokepoint as `update_extra`."""
         entry = await self._owned(entry_id, user)

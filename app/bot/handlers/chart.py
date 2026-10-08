@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from datetime import date
+
+import pandas as pd
 from aiogram import F, Router
 from aiogram.filters import Command, CommandObject
 from aiogram.types import BufferedInputFile, CallbackQuery, Message
@@ -11,7 +14,7 @@ from app.di import Container
 from app.domain.models import User
 from app.infrastructure.repositories.entry_repo import SqlEntryRepository
 from app.services.analysis_service import AnalysisService
-from app.services.time import parse_period
+from app.services.time import parse_period, today_in_tz
 
 router = Router()
 
@@ -77,3 +80,40 @@ async def chart_picked(
     period = cb.data.split(":", 1)[1]
     await _send_chart(cb, user, session, container, period)
     await cb.answer()
+
+
+# --- /pixels -------------------------------------------------------------------
+
+async def _daily_summary(
+    user: User, session: AsyncSession, start: date, end: date
+) -> pd.DataFrame:
+    return await AnalysisService(SqlEntryRepository(session)).daily_summary(user.id, start, end)
+
+
+@router.message(Command("pixels"))
+async def cmd_pixels(
+    message: Message,
+    command: CommandObject,
+    user: User,
+    session: AsyncSession,
+    container: Container,
+) -> None:
+    today = today_in_tz(user.timezone)
+    raw = (command.args or "").strip()
+    try:
+        year = int(raw) if raw else today.year
+    except ValueError:
+        year = 0
+    if not 2000 <= year <= today.year:
+        await message.answer(t(user.language, "pixels.bad_year", year=today.year))
+        return
+    start, end = date(year, 1, 1), date(year, 12, 31)
+    df = await _daily_summary(user, session, start, end)
+    png = container.chart_service.year_pixels(df, year=year, today=today)
+    mood_days = int(df["mood"].notna().sum()) if "mood" in df.columns else 0
+    migraine_days = int(df["migraine"].notna().sum()) if "migraine" in df.columns else 0
+    await message.answer_photo(
+        BufferedInputFile(png, filename=f"mood_{year}.png"),
+        caption=t(user.language, "pixels.caption", year=year,
+                  days=mood_days, migraines=migraine_days),
+    )

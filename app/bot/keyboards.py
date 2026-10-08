@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
+from app.bot.i18n import t
 from app.domain.enums import METRIC_LABELS, NUMERIC_METRICS, TEXT_METRICS, MetricType
 
 
@@ -94,3 +97,30 @@ def period_picker(callback_prefix: str) -> InlineKeyboardMarkup:
         ]
     )
 
+
+
+# Readings worth a gentle "want to work through it?" — polarity per
+# METRIC_SEMANTICS: low is hard for these, high is hard for the others.
+_LOW_IS_HARD = frozenset({MetricType.MOOD, MetricType.ENERGY, MetricType.FOCUS, MetricType.SLEEP_QUALITY})
+_HIGH_IS_HARD = frozenset({MetricType.ANXIETY, MetricType.STRESS, MetricType.IRRITABILITY, MetricType.PAIN})
+
+
+def is_hard_reading(metric: MetricType, value: float) -> bool:
+    return (metric in _LOW_IS_HARD and value <= 4) or (metric in _HIGH_IS_HARD and value >= 7)
+
+
+def entry_actions(
+    lang: str, entry_ids: list[int], readings: Sequence[tuple[MetricType, float]] = ()
+) -> InlineKeyboardMarkup:
+    """Buttons under a "logged ✓" confirmation: Undo (these exact entries),
+    Add a note, and — after a hard reading — a thought record."""
+    undo = "en:undo:" + ",".join(map(str, entry_ids))
+    row = [InlineKeyboardButton(text=t(lang, "entry.btn.note"), callback_data="en:note")]
+    if len(undo.encode()) <= 64:  # Telegram's callback_data limit
+        row.insert(0, InlineKeyboardButton(text=t(lang, "entry.btn.undo"), callback_data=undo))
+    rows = [row]
+    if any(is_hard_reading(m, v) for m, v in readings):
+        rows.append([InlineKeyboardButton(
+            text=t(lang, "entry.btn.thought"), callback_data="en:thought"
+        )])
+    return InlineKeyboardMarkup(inline_keyboard=rows)

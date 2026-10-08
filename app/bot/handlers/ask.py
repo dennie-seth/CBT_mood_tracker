@@ -28,7 +28,21 @@ async def cmd_ask(
     if not command.args:
         await message.answer(t(user.language, "ask.usage"))
         return
+    await run_ask(
+        message, question=command.args.strip(), user=user, session=session, container=container
+    )
 
+
+async def run_ask(
+    message: Message,
+    *,
+    question: str,
+    user: User,
+    session: AsyncSession,
+    container: Container,
+) -> None:
+    """Answer `question` in `message`'s chat. Shared by /ask, the home
+    keyboard's Ask button and the plain-text "Ask Claude" choice."""
     repo = SqlEntryRepository(session)
     es = entry_service(session, container.cipher)
     analysis = AnalysisService(repo)
@@ -46,7 +60,7 @@ async def cmd_ask(
 
     today = today_in_tz(user.timezone)
     answer = await container.ai_service.answer(
-        question=command.args.strip(),
+        question=question,
         dispatcher=dispatcher,
         today=today,
         target_language=user.language,

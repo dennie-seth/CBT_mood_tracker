@@ -8,8 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.bot.deps import entry_service
 from app.bot.i18n import metric_label, t
-from app.bot.keyboards import scale_1_to_10
+from app.bot.keyboards import entry_actions, scale_1_to_10
 from app.bot.states import QuickFlow
+from app.bot.support import offer_support
 from app.domain.enums import MetricType
 from app.domain.models import User
 from app.infrastructure.crypto import FernetCipher
@@ -75,9 +76,12 @@ async def quick_value_chosen(
             user.language, "log.saved_numeric",
             label=metric_label(metric, user.language),
             value=value, date=dto.entry_date.isoformat(),
-        )
+        ),
+        reply_markup=entry_actions(user.language, [dto.id], [(metric, float(value))]),
     )
     await cb.answer()
+    if isinstance(cb.message, Message):
+        await offer_support(cb.message, user, svc, [(metric, float(value))])
 
 
 @router.message(QuickFlow.pick_value)
@@ -106,5 +110,7 @@ async def quick_value_typed(
             user.language, "log.saved_numeric",
             label=metric_label(metric, user.language),
             value=value, date=dto.entry_date.isoformat(),
-        )
+        ),
+        reply_markup=entry_actions(user.language, [dto.id], [(metric, value)]),
     )
+    await offer_support(message, user, svc, [(metric, value)])

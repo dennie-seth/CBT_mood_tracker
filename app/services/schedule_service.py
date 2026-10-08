@@ -134,7 +134,10 @@ class SummaryScheduler:
             now_utc = pytz.utc.localize(now_utc)
 
         async with self._sm() as session:
-            rows = await SqlScheduleRepository(session).list_enabled()
+            schedule_repo = SqlScheduleRepository(session)
+            rows = await schedule_repo.list_enabled()
+            # /pause: no proactive messages of any kind until it ends.
+            paused = await schedule_repo.paused_user_ids(now_utc)
             # Migraine reminders aren't tied to schedule prefs — any user may
             # have an open attack.
             all_users = (
@@ -145,7 +148,7 @@ class SummaryScheduler:
 
         coros: list[Awaitable[None]] = []
         for prefs, user in rows:
-            if not self._allowed(user):
+            if not self._allowed(user) or user.id in paused:
                 continue
             local = now_utc.astimezone(pytz.timezone(user.timezone))
             if is_daily_due(prefs, local):
@@ -160,7 +163,7 @@ class SummaryScheduler:
                 coros.append(self._safe_probe(user=user, now_utc=now_utc))
 
         for user in all_users:
-            if self._allowed(user):
+            if self._allowed(user) and user.id not in paused:
                 coros.append(self._safe_remind(user=user, now_utc=now_utc))
 
         if coros:

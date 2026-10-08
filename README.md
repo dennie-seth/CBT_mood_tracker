@@ -45,6 +45,17 @@ The bot's `/help` lists every command with a *use-case* sentence — when to rea
 | Command | When to use |
 |---|---|
 | `/start`, `/help` | Show the full help with use cases |
+| `/pixels [year]` | Your year as a mood calendar (red low → gray neutral → blue good), migraine days marked |
+| `/export csv [period]` | All your entries decrypted as CSV — backup or moving your data (the file itself is unencrypted) |
+| `/breathe` | Anxiety spike or a migraine — box breathing or 5-4-3-2-1 grounding, taps only. After a very hard reading the bot also shows what helped you before (your own coping notes and best activities) |
+| `/hide` | Someone might see your phone — clears the last 48 h of this chat (entries stay saved) |
+| `/tidy on\|off` | Notes and thought records vanish from the chat 5 min after saving |
+| `/pause [1d…14d\|off]` | Quiet mode — no summaries, check-ins or migraine reminders until it ends |
+| `/day` | Evening check-in in a few taps: mood, energy, anxiety, sleep (each saved as you go, Undo at the end) |
+| `/recent` | Fix a wrong number, edit a note, or delete one of your latest entries |
+| `/home` / `/home off` | Shortcut buttons under the text field — your two most-logged metrics, migraine, note, today, ask |
+| *(just type)* `mood 6 anxiety 7 slept 6.5` | Log several metrics in one message (parsed locally; RU works too: `настроение 6 сон 7ч`) |
+| *(just type)* any other text | Choose: save as note, thought record, ask Claude, or nothing — nothing is sent to Claude unless you pick it |
 | `/log` | Logging a less-common metric without remembering its specific command |
 | `/mood` `/sleep` `/energy` `/hunger` `/anxiety` `/stress` `/pain` `/irritability` `/focus` | Fast in-the-moment 1–10 capture |
 | `/sleephours` | Right after waking, log how long you actually slept (e.g. `7.5`) |

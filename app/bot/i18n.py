@@ -40,9 +40,17 @@ EN: dict[str, str] = {
     "thought.start": "CBT thought record. First, describe the situation:",
     "thought.ask_auto": "What automatic thought came up?",
     "thought.ask_distortion": (
-        "Which cognitive distortion fits best?\n"
-        "(catastrophising / all-or-nothing / mind-reading / personalisation / "
-        "overgeneralisation / labelling / 'should' statements / fortune-telling / other)"
+        "Which thinking trap fits best? Tap one — or “Other” to write your own.\n\n"
+        "• Catastrophising — expecting the worst\n"
+        "• All-or-nothing — perfect or a total failure\n"
+        "• Mind reading — “they think I'm…”\n"
+        "• Fortune telling — “it will go badly”\n"
+        "• Personalisation — “it's my fault”\n"
+        "• Overgeneralisation — “this always happens”\n"
+        "• Labelling — “I'm useless”\n"
+        "• “Should” statements — rigid rules for yourself\n"
+        "• Emotional reasoning — “I feel it, so it's true”\n"
+        "• Discounting the positive — “that doesn't count”"
     ),
     "thought.ask_reframe": "Now reframe it. What's a more balanced thought?",
     "thought.saved": "Thought record saved for {date}. Nice work.",
@@ -64,21 +72,22 @@ EN: dict[str, str] = {
     "activate.start": "What would lift your mood, even slightly? Send one short line.",
     "activate.ask_when": "When?",
     "activate.ask_predicted": (
-        "Planned for {date}. How much do you predict it will lift your mood? (1-10)"
+        "Planned for {date}. How much do you expect it to help your mood?\n"
+        "1 = not at all, 10 = a lot.{hint}"
     ),
     "activate.saved": (
-        "Plan saved for {date} (predicted +{predicted}). "
+        "Plan saved for {date} (you expect it to help {predicted}/10). "
         "Use /done when finished, or /skip if not."
     ),
     "plans.empty": "No open plans. /activate to add one.",
     "plans.header": "Open plans:",
     "plans.line": "• {weekday} {date} — {text}{suffix}",
-    "plans.predicted_suffix": " (predicted +{predicted})",
+    "plans.predicted_suffix": " (expected {predicted}/10)",
     "done.empty": "No open plans. /activate to add one.",
     "done.pick": "Which one did you complete?",
-    "done.ask_actual": "How much did it actually lift your mood? (1-10)",
-    "done.saved_with_pred": "Done — predicted +{predicted}, actual +{actual}. Nice.",
-    "done.saved": "Done — actual +{actual}. Nice.",
+    "done.ask_actual": "How much did it actually help your mood?\n1 = not at all, 10 = a lot.",
+    "done.saved_with_pred": "Done — you expected {predicted}/10, it helped {actual}/10. Nice.",
+    "done.saved": "Done — it helped {actual}/10. Nice.",
     "done.failed": "Couldn't mark done: {err}",
     "skip.empty": "No open plans to skip.",
     "skip.pick": "Which one are you skipping?",
@@ -294,11 +303,195 @@ EN: dict[str, str] = {
         "triggered it, or /activate to ground yourself in a small "
         "concrete action."
     ),
+    # Prediction calibration hints (/activate)
+    "activate.hint_more_specific": (
+        "\n\n💡 When you did this before ({n}×), it helped about {delta} points "
+        "more than you expected."
+    ),
+    "activate.hint_more_overall": (
+        "\n\n💡 So far, planned activities helped you about {delta} points more "
+        "than you expected ({n} plans). Low mood tends to underestimate them."
+    ),
+    "activate.hint_less_specific": (
+        "\n\n💡 When you did this before ({n}×), it helped about {delta} points "
+        "less than you expected."
+    ),
+    "activate.hint_less_overall": (
+        "\n\n💡 So far, planned activities helped about {delta} points less than "
+        "you expected ({n} plans) — small, easy ones still count."
+    ),
+    # Distortion buttons
+    "dist.catastrophising": "Catastrophising",
+    "dist.all_or_nothing": "All-or-nothing",
+    "dist.mind_reading": "Mind reading",
+    "dist.fortune_telling": "Fortune telling",
+    "dist.personalisation": "Personalisation",
+    "dist.overgeneralisation": "Overgeneralisation",
+    "dist.labelling": "Labelling",
+    "dist.shoulds": "“Should” statements",
+    "dist.emotional_reasoning": "Emotional reasoning",
+    "dist.discounting_positive": "Discounting the positive",
+    "dist.other": "✏️ Other — I'll write it",
+    "thought.type_distortion": "Write it in your own words:",
+    # /day card
+    "day.q.mood": "How's your mood today?\n1 = very low, 10 = very good",
+    "day.q.energy": "How much energy did you have today?\n1 = drained, 10 = full of energy",
+    "day.q.anxiety": "How anxious did you feel today?\n1 = calm, 10 = very anxious",
+    "day.q.sleep_quality": "How well did you sleep last night?\n1 = very poorly, 10 = very well",
+    "day.btn.skip": "Skip",
+    "day.done": "Day logged: {items}. Thank you for checking in.",
+    "day.done_empty": "Nothing logged — that's okay.",
+    "stale.button": "That button is from an earlier step — use the latest message.",
+    # /recent
+    "recent.header": "Recent entries — tap one to change or delete it:",
+    "recent.empty": "Nothing logged in the last 30 days.",
+    "recent.pick_value": "{label} — pick the corrected value:",
+    "recent.ask_text": "Send the corrected text:",
+    "recent.ask_delete": "Delete this entry? This can't be undone.",
+    "recent.deleted": "Deleted.",
+    "recent.saved": "✓ Saved",
+    "recent.not_found": "I can't find that entry any more.",
+    "recent.btn.value": "✏️ Change value",
+    "recent.btn.text": "✏️ Edit text",
+    "recent.btn.delete": "🗑 Delete",
+    "recent.btn.delete_yes": "Yes, delete",
+    "recent.btn.back": "« Back",
+    "recent.btn.card": "🤕 Open attack card",
+    "cmd.day": "Rate my day: mood, energy, anxiety, sleep",
+    "cmd.recent": "Fix or delete recent entries",
+    # /hide, /tidy, /pause
+    "hide.confirm": (
+        "This removes the last 48 hours of this chat from your screen "
+        "(Telegram doesn't let bots delete older messages). Your saved entries "
+        "stay — /today and /recent still show them."
+    ),
+    "hide.btn.yes": "🧹 Clear chat",
+    "hide.btn.no": "Cancel",
+    "hide.done": "Cleared. Your entries are still saved.",
+    "hide.cancelled": "Okay, nothing removed.",
+    "tidy.on": (
+        "Auto-tidy is on: notes and thought records disappear from this chat "
+        "5 minutes after saving. They stay saved. /tidy off to stop."
+    ),
+    "tidy.off": "Auto-tidy is off.",
+    "tidy.status_on": "Auto-tidy is on. /tidy off to stop.",
+    "tidy.status_off": (
+        "Auto-tidy is off. /tidy on makes notes and thought records disappear "
+        "from the chat 5 minutes after saving (they stay saved)."
+    ),
+    "pause.ask": (
+        "Pause every message the bot sends on its own — summaries, check-ins, "
+        "migraine reminders? Everything else keeps working."
+    ),
+    "pause.btn.1": "1 day",
+    "pause.btn.3": "3 days",
+    "pause.btn.7": "1 week",
+    "pause.btn.resume": "▶ Resume now",
+    "pause.set": "Paused until {until}. Take care of yourself.",
+    "pause.resumed": "Resumed — the bot's own messages are back on.",
+    "pause.status": "Paused until {until}.",
+    "pause.bad_args": "Use /pause 1d … /pause 14d, or /pause off.",
+    "cmd.hide": "Clear this chat (entries stay saved)",
+    "cmd.pause": "Quiet mode: pause the bot's own messages",
+    # Hard moments
+    "support.header": "Things that helped you before:",
+    "support.offer": "Want to slow down for a minute?",
+    "support.btn.breathe": "🫁 Breathe with me",
+    "support.btn.ground": "🖐 5-4-3-2-1 grounding",
+    "breathe.choose": "Pick one — each takes about a minute.",
+    "breathe.title": "🫁 Box breathing · round {round}/{total}",
+    "breathe.in": "Breathe in through your nose… 4",
+    "breathe.hold_in": "Hold gently… 4",
+    "breathe.out": "Breathe out slowly… 4",
+    "breathe.hold_out": "Rest… 4",
+    "breathe.btn.stop": "■ Stop",
+    "breathe.done": "Well done. Notice how your body feels now.",
+    "breathe.stopped": "Stopped. Come back any time with /breathe.",
+    "breathe.btn.log_anxiety": "😰 Log anxiety now",
+    "ground.5": "👀 Look around and name 5 things you can see.",
+    "ground.4": "✋ Notice 4 things you can touch or feel.",
+    "ground.3": "👂 Listen for 3 things you can hear.",
+    "ground.2": "👃 Notice 2 things you can smell.",
+    "ground.1": "👅 Notice 1 thing you can taste.",
+    "ground.btn.next": "Done ✓",
+    "ground.done": "You're here, now. Take one slow breath.",
+    "cmd.breathe": "Breathing or grounding exercise",
+    # Reflection
+    "pixels.caption": "Mood {year} · {days} days with a mood logged · {migraines} migraine days",
+    "pixels.bad_year": "Use /pixels or /pixels {year} (a year you've logged in).",
+    "export.csv_caption": (
+        "All your entries, decrypted, as CSV (opens in Excel / Google Sheets). "
+        "This file is unencrypted — keep it somewhere private."
+    ),
+    "cmd.pixels": "My year in pixels (mood calendar)",
+    # Command menu (Telegram "/" list)
+    "cmd.mood": "Log mood 1-10",
+    "cmd.anxiety": "Log anxiety 1-10",
+    "cmd.migraine": "Migraine attack — start, update or close",
+    "cmd.note": "Write a private note",
+    "cmd.thought": "CBT thought record",
+    "cmd.today": "What I've logged today",
+    "cmd.week": "Last 7 days",
+    "cmd.ask": "Ask Claude about my data",
+    "cmd.log": "Log any metric",
+    "cmd.activate": "Plan a small mood-lifting activity",
+    "cmd.done": "Mark a planned activity done",
+    "cmd.chart": "Chart my metrics",
+    "cmd.migraines": "Migraine summary",
+    "cmd.therapist": "PDF report for my therapist",
+    "cmd.home": "Show or hide shortcut buttons",
+    "cmd.lang": "Language: /lang en or /lang ru",
+    "cmd.help": "All commands and when to use them",
+    "cmd.cancel": "Cancel the current step",
+    # Short metric names (buttons, one-line confirmations)
+    "short.mood": "Mood",
+    "short.energy": "Energy",
+    "short.hunger": "Appetite",
+    "short.anxiety": "Anxiety",
+    "short.stress": "Stress",
+    "short.irritability": "Irritability",
+    "short.focus": "Focus",
+    "short.pain": "Pain",
+    "short.sleep_quality": "Sleep",
+    "short.sleep_hours": "Slept (h)",
+    # Home keyboard
+    "home.note": "📝 Note",
+    "home.migraine": "🤕 Migraine",
+    "home.today": "📅 Today",
+    "home.ask": "💬 Ask",
+    "home.shown": "Shortcuts are below the text field. /home off hides them.",
+    "home.hidden": "Shortcuts hidden. /home brings them back.",
+    "home.ask_question": "What would you like to ask about your data?",
+    # Plain text sent outside a command
+    "plain.offer": "What should I do with this?",
+    "plain.btn.note": "📝 Save as note",
+    "plain.btn.thought": "🧠 Thought record",
+    "plain.btn.ask": "💬 Ask Claude",
+    "plain.btn.nothing": "✖ Nothing",
+    "plain.dismissed": "Okay — not saved.",
+    "plain.expired": "That text isn't available any more — please send it again.",
+    # One-message logging + confirmation buttons
+    "quick.saved": "Logged {items} for {date}.",
+    "entry.btn.undo": "↩ Undo",
+    "entry.btn.note": "📝 Add a note",
+    "entry.btn.thought": "🧠 Thought record",
+    "entry.undone": "Undone — removed.",
+    "entry.undo_failed": "Couldn't undo — it may already be removed.",
+    "entry.note_prompt": "What's behind it? Send a note.",
     # HELP_TEXT — assembled from a single block to keep formatting.
     "help.text": (
         "CBT tracker bot — log your day, ask Claude to analyse it.\n"
         "Each command below is followed by *when* to reach for it.\n\n"
         "📝 Logging\n"
+        "Tip: just type “mood 6 anxiety 7 slept 6.5” to log several at once, "
+        "or send any text and pick what to do with it.\n"
+        "/home — shortcut buttons under the text field (your most-used "
+        "metrics, note, migraine, today, ask). Use to log with one tap; "
+        "/home off hides them.\n"
+        "/day — rate your day in a few taps (mood, energy, anxiety, sleep). "
+        "Use in the evening to check in without typing.\n"
+        "/recent — your latest entries with fix / delete buttons. Use when "
+        "you tapped the wrong number or want to correct a note.\n"
         "/log — guided pick of any metric. Use when you want to log "
         "something less common (symptoms, focus, irritability) without "
         "remembering a specific command.\n"
@@ -338,6 +531,10 @@ EN: dict[str, str] = {
         "Use when you want to spot trends visually.\n"
         "/export — generate a multi-page PDF report (numeric only). "
         "Use for a private numeric snapshot or a personal archive.\n"
+        "/pixels [year] — your year as a mood calendar, migraine days marked. "
+        "Use to see seasons and streaks at a glance.\n"
+        "/export csv [7d|30d|90d|all] — all your entries, decrypted, as a CSV "
+        "file. Use for a backup or to move your data elsewhere.\n"
         "/therapist — richer PDF including thought records, BA outcomes, "
         "notes and other free-text. Use to share with a clinician — "
         "marked confidential, share only with people you trust.\n\n"
@@ -356,6 +553,17 @@ EN: dict[str, str] = {
         "/checkins on|off — proactive nudges when mood, sleep or "
         "anxiety look unusual. Enable if you want the bot to reach "
         "out instead of waiting for your move.\n\n"
+        "🫁 Hard moments\n"
+        "/breathe — box breathing or 5-4-3-2-1 grounding, all taps, no typing. "
+        "Use when anxiety spikes or a migraine makes reading hard. After a very "
+        "hard reading the bot also shows what helped you before.\n\n"
+        "🔒 Privacy & quiet\n"
+        "/hide — clear the last 48 hours of this chat from your screen; entries "
+        "stay saved. Use when someone else might see your phone.\n"
+        "/tidy on|off — notes and thought records disappear from the chat 5 "
+        "minutes after saving. Use if you'd rather not leave them on screen.\n"
+        "/pause [1d…14d|off] — quiet mode: no summaries, check-ins or reminders "
+        "until it ends. Use on days when any notification is too much.\n\n"
         "⚙️ Settings\n"
         "/tz <IANA> — set your timezone, e.g. /tz Europe/Berlin. "
         "Use once on first login; day boundaries depend on it.\n"
@@ -386,9 +594,17 @@ RU: dict[str, str] = {
     "thought.start": "Запись мысли (КПТ). Сначала опиши ситуацию:",
     "thought.ask_auto": "Какая автоматическая мысль появилась?",
     "thought.ask_distortion": (
-        "Какое когнитивное искажение здесь подходит лучше всего?\n"
-        "(катастрофизация / чёрно-белое мышление / чтение мыслей / персонализация / "
-        "сверхобобщение / навешивание ярлыков / «долженствование» / предсказание / другое)"
+        "Какая ловушка мышления подходит лучше? Нажми — или «Другое», чтобы написать своё.\n\n"
+        "• Катастрофизация — ожидание худшего\n"
+        "• Чёрно-белое мышление — либо идеально, либо провал\n"
+        "• Чтение мыслей — «они думают, что я…»\n"
+        "• Предсказание — «всё пойдёт плохо»\n"
+        "• Персонализация — «это из-за меня»\n"
+        "• Сверхобобщение — «так всегда»\n"
+        "• Навешивание ярлыков — «я ни на что не гожусь»\n"
+        "• «Долженствование» — жёсткие правила к себе\n"
+        "• Эмоциональное обоснование — «чувствую, значит, правда»\n"
+        "• Обесценивание хорошего — «это не считается»"
     ),
     "thought.ask_reframe": "Теперь переформулируй. Какая мысль более сбалансирована?",
     "thought.saved": "Запись мысли сохранена за {date}. Хорошая работа.",
@@ -408,22 +624,22 @@ RU: dict[str, str] = {
     "activate.start": "Что могло бы немного поднять настроение? Пришли одну короткую строку.",
     "activate.ask_when": "Когда?",
     "activate.ask_predicted": (
-        "Запланировано на {date}. Насколько, по твоим ощущениям, "
-        "это поднимет настроение? (1–10)"
+        "Запланировано на {date}. Насколько, по-твоему, это поможет настроению?\n"
+        "1 — совсем нет, 10 — очень.{hint}"
     ),
     "activate.saved": (
-        "План сохранён на {date} (прогноз +{predicted}). "
+        "План сохранён на {date} (ожидаешь, что поможет на {predicted}/10). "
         "Используй /done после выполнения или /skip, если не получилось."
     ),
     "plans.empty": "Открытых планов нет. /activate — добавить.",
     "plans.header": "Открытые планы:",
     "plans.line": "• {weekday} {date} — {text}{suffix}",
-    "plans.predicted_suffix": " (прогноз +{predicted})",
+    "plans.predicted_suffix": " (ожидание {predicted}/10)",
     "done.empty": "Открытых планов нет. /activate — добавить.",
     "done.pick": "Какой план ты выполнила?",
-    "done.ask_actual": "Насколько это реально подняло настроение? (1–10)",
-    "done.saved_with_pred": "Готово — прогноз +{predicted}, факт +{actual}. Умница.",
-    "done.saved": "Готово — факт +{actual}. Умница.",
+    "done.ask_actual": "Насколько это на самом деле помогло настроению?\n1 — совсем нет, 10 — очень.",
+    "done.saved_with_pred": "Готово — ожидала {predicted}/10, помогло на {actual}/10. Умница.",
+    "done.saved": "Готово — помогло на {actual}/10. Умница.",
     "done.failed": "Не получилось отметить выполненным: {err}",
     "skip.empty": "Нет открытых планов, чтобы пропустить.",
     "skip.pick": "Какой план пропускаем?",
@@ -631,10 +847,182 @@ RU: dict[str, str] = {
         "её запустило, либо /activate — чтобы заземлиться через "
         "маленькое конкретное действие."
     ),
+    "activate.hint_more_specific": (
+        "\n\n💡 Когда ты делала это раньше ({n}×), это помогало примерно на {delta} "
+        "больше, чем ты ожидала."
+    ),
+    "activate.hint_more_overall": (
+        "\n\n💡 Пока что запланированные дела помогали тебе примерно на {delta} больше, "
+        "чем ты ожидала ({n} планов). В плохом настроении их эффект часто недооценивают."
+    ),
+    "activate.hint_less_specific": (
+        "\n\n💡 Когда ты делала это раньше ({n}×), это помогало примерно на {delta} "
+        "меньше, чем ты ожидала."
+    ),
+    "activate.hint_less_overall": (
+        "\n\n💡 Пока что запланированные дела помогали примерно на {delta} меньше, "
+        "чем ты ожидала ({n} планов) — маленькие и лёгкие тоже считаются."
+    ),
+    "dist.catastrophising": "Катастрофизация",
+    "dist.all_or_nothing": "Чёрно-белое мышление",
+    "dist.mind_reading": "Чтение мыслей",
+    "dist.fortune_telling": "Предсказание",
+    "dist.personalisation": "Персонализация",
+    "dist.overgeneralisation": "Сверхобобщение",
+    "dist.labelling": "Навешивание ярлыков",
+    "dist.shoulds": "«Долженствование»",
+    "dist.emotional_reasoning": "Эмоциональное обоснование",
+    "dist.discounting_positive": "Обесценивание хорошего",
+    "dist.other": "✏️ Другое — напишу сама",
+    "thought.type_distortion": "Напиши своими словами:",
+    "day.q.mood": "Как настроение сегодня?\n1 — очень плохое, 10 — очень хорошее",
+    "day.q.energy": "Сколько было энергии сегодня?\n1 — совсем без сил, 10 — полна сил",
+    "day.q.anxiety": "Насколько тревожно было сегодня?\n1 — спокойно, 10 — очень тревожно",
+    "day.q.sleep_quality": "Как ты спала этой ночью?\n1 — очень плохо, 10 — очень хорошо",
+    "day.btn.skip": "Пропустить",
+    "day.done": "День записан: {items}. Спасибо, что отметилась.",
+    "day.done_empty": "Ничего не записано — это нормально.",
+    "stale.button": "Эта кнопка из прошлого шага — используй последнее сообщение.",
+    "recent.header": "Последние записи — нажми, чтобы изменить или удалить:",
+    "recent.empty": "За последние 30 дней записей нет.",
+    "recent.pick_value": "{label} — выбери исправленное значение:",
+    "recent.ask_text": "Пришли исправленный текст:",
+    "recent.ask_delete": "Удалить эту запись? Отменить будет нельзя.",
+    "recent.deleted": "Удалено.",
+    "recent.saved": "✓ Сохранено",
+    "recent.not_found": "Не могу найти эту запись.",
+    "recent.btn.value": "✏️ Изменить значение",
+    "recent.btn.text": "✏️ Изменить текст",
+    "recent.btn.delete": "🗑 Удалить",
+    "recent.btn.delete_yes": "Да, удалить",
+    "recent.btn.back": "« Назад",
+    "recent.btn.card": "🤕 Открыть карточку приступа",
+    "cmd.day": "Оценить день: настроение, энергия, тревога, сон",
+    "cmd.recent": "Исправить или удалить недавние записи",
+    "hide.confirm": (
+        "Это уберёт с экрана последние 48 часов этого чата (более старые "
+        "сообщения Telegram удалять ботам не даёт). Записи останутся — /today "
+        "и /recent их покажут."
+    ),
+    "hide.btn.yes": "🧹 Очистить чат",
+    "hide.btn.no": "Отмена",
+    "hide.done": "Очищено. Записи сохранены.",
+    "hide.cancelled": "Хорошо, ничего не удаляю.",
+    "tidy.on": (
+        "Автоочистка включена: заметки и записи мыслей исчезают из чата через "
+        "5 минут после сохранения. Сами записи остаются. /tidy off — выключить."
+    ),
+    "tidy.off": "Автоочистка выключена.",
+    "tidy.status_on": "Автоочистка включена. /tidy off — выключить.",
+    "tidy.status_off": (
+        "Автоочистка выключена. /tidy on — заметки и записи мыслей будут "
+        "исчезать из чата через 5 минут после сохранения (сами записи остаются)."
+    ),
+    "pause.ask": (
+        "Поставить на паузу всё, что бот присылает сам — сводки, проверки, "
+        "напоминания о мигрени? Остальное продолжит работать."
+    ),
+    "pause.btn.1": "1 день",
+    "pause.btn.3": "3 дня",
+    "pause.btn.7": "1 неделю",
+    "pause.btn.resume": "▶ Возобновить",
+    "pause.set": "Пауза до {until}. Береги себя.",
+    "pause.resumed": "Возобновлено — бот снова пишет сам.",
+    "pause.status": "Пауза до {until}.",
+    "pause.bad_args": "Используй /pause 1d … /pause 14d или /pause off.",
+    "cmd.hide": "Очистить этот чат (записи сохранятся)",
+    "cmd.pause": "Тихий режим: пауза для сообщений бота",
+    "support.header": "Что помогало тебе раньше:",
+    "support.offer": "Хочешь немного замедлиться?",
+    "support.btn.breathe": "🫁 Подышать вместе",
+    "support.btn.ground": "🖐 Заземление 5-4-3-2-1",
+    "breathe.choose": "Выбери — каждое занимает около минуты.",
+    "breathe.title": "🫁 Квадратное дыхание · круг {round}/{total}",
+    "breathe.in": "Вдох через нос… 4",
+    "breathe.hold_in": "Мягко задержи… 4",
+    "breathe.out": "Медленный выдох… 4",
+    "breathe.hold_out": "Пауза… 4",
+    "breathe.btn.stop": "■ Стоп",
+    "breathe.done": "Хорошо. Заметь, как сейчас чувствует себя тело.",
+    "breathe.stopped": "Остановлено. Возвращайся в любой момент: /breathe.",
+    "breathe.btn.log_anxiety": "😰 Записать тревогу",
+    "ground.5": "👀 Оглянись и назови 5 вещей, которые видишь.",
+    "ground.4": "✋ Заметь 4 вещи, которых можешь коснуться или почувствовать.",
+    "ground.3": "👂 Прислушайся к 3 звукам.",
+    "ground.2": "👃 Заметь 2 запаха.",
+    "ground.1": "👅 Заметь 1 вкус.",
+    "ground.btn.next": "Готово ✓",
+    "ground.done": "Ты здесь и сейчас. Сделай один медленный вдох.",
+    "cmd.breathe": "Дыхание или заземление",
+    "pixels.caption": "Настроение {year} · дней с оценкой настроения: {days} · дней с мигренью: {migraines}",
+    "pixels.bad_year": "Используй /pixels или /pixels {year} (год, за который есть записи).",
+    "export.csv_caption": (
+        "Все твои записи, расшифрованные, в CSV (открывается в Excel / Google Таблицах). "
+        "Файл не зашифрован — храни его в надёжном месте."
+    ),
+    "cmd.pixels": "Мой год в пикселях (календарь настроения)",
+    "cmd.mood": "Записать настроение 1–10",
+    "cmd.anxiety": "Записать тревогу 1–10",
+    "cmd.migraine": "Приступ мигрени — начать, дополнить, закрыть",
+    "cmd.note": "Личная заметка",
+    "cmd.thought": "Запись мысли (КПТ)",
+    "cmd.today": "Что я записала сегодня",
+    "cmd.week": "Последние 7 дней",
+    "cmd.ask": "Спросить Клода о моих данных",
+    "cmd.log": "Записать любую метрику",
+    "cmd.activate": "Запланировать маленькое приятное дело",
+    "cmd.done": "Отметить план выполненным",
+    "cmd.chart": "График моих метрик",
+    "cmd.migraines": "Сводка по мигреням",
+    "cmd.therapist": "PDF-отчёт для терапевта",
+    "cmd.home": "Показать или скрыть кнопки-ярлыки",
+    "cmd.lang": "Язык: /lang en или /lang ru",
+    "cmd.help": "Все команды и когда их использовать",
+    "cmd.cancel": "Отменить текущий шаг",
+    "short.mood": "Настроение",
+    "short.energy": "Энергия",
+    "short.hunger": "Аппетит",
+    "short.anxiety": "Тревога",
+    "short.stress": "Стресс",
+    "short.irritability": "Раздражительность",
+    "short.focus": "Концентрация",
+    "short.pain": "Боль",
+    "short.sleep_quality": "Сон",
+    "short.sleep_hours": "Сон (ч)",
+    "home.note": "📝 Заметка",
+    "home.migraine": "🤕 Мигрень",
+    "home.today": "📅 Сегодня",
+    "home.ask": "💬 Спросить",
+    "home.shown": "Ярлыки — под полем ввода. /home off их скрывает.",
+    "home.hidden": "Ярлыки скрыты. /home вернёт их.",
+    "home.ask_question": "Что ты хочешь узнать о своих данных?",
+    "plain.offer": "Что с этим сделать?",
+    "plain.btn.note": "📝 Сохранить заметку",
+    "plain.btn.thought": "🧠 Запись мысли",
+    "plain.btn.ask": "💬 Спросить Клода",
+    "plain.btn.nothing": "✖ Ничего",
+    "plain.dismissed": "Хорошо — не сохраняю.",
+    "plain.expired": "Этот текст больше недоступен — пришли его ещё раз.",
+    "quick.saved": "Записано: {items} за {date}.",
+    "entry.btn.undo": "↩ Отменить",
+    "entry.btn.note": "📝 Добавить заметку",
+    "entry.btn.thought": "🧠 Запись мысли",
+    "entry.undone": "Отменено — запись удалена.",
+    "entry.undo_failed": "Не получилось отменить — возможно, запись уже удалена.",
+    "entry.note_prompt": "Что за этим стоит? Пришли заметку.",
     "help.text": (
         "Бот для самоотслеживания (КПТ) — записывай день, попроси Клода проанализировать.\n"
         "После каждой команды — *когда* её удобно использовать.\n\n"
         "📝 Записи\n"
+        "Подсказка: просто напиши «настроение 6 тревога 7 спала 6.5», чтобы "
+        "записать сразу несколько, или пришли любой текст и выбери, что с ним сделать.\n"
+        "/home — кнопки-ярлыки под полем ввода (частые метрики, заметка, "
+        "мигрень, сегодня, вопрос). Чтобы записывать в одно касание; "
+        "/home off их скрывает.\n"
+        "/day — оценить день в несколько касаний (настроение, энергия, тревога, сон). "
+        "Вечером, чтобы отметиться без набора текста.\n"
+        "/recent — последние записи с кнопками исправить / удалить. Когда "
+        "нажала не ту цифру или хочешь поправить заметку.\n"
         "/log — пошаговый выбор любой метрики. Когда хочешь записать "
         "что-то нечастое (симптомы, концентрация, раздражительность), "
         "не вспоминая конкретную команду.\n"
@@ -674,6 +1062,10 @@ RU: dict[str, str] = {
         "Чтобы заметить тренды визуально.\n"
         "/export — многостраничный PDF-отчёт (только числа). "
         "Для личного снимка состояния или архива.\n"
+        "/pixels [год] — твой год как календарь настроения, дни мигрени отмечены. "
+        "Чтобы увидеть сезоны и полосы с первого взгляда.\n"
+        "/export csv [7d|30d|90d|all] — все записи, расшифрованные, в CSV. "
+        "Для резервной копии или чтобы перенести данные.\n"
         "/therapist — расширенный PDF: записи мыслей, итоги активации, "
         "заметки и тренды. Для отправки клиницисту — помечен "
         "конфиденциальным, делись только с теми, кому доверяешь.\n\n"
@@ -692,6 +1084,17 @@ RU: dict[str, str] = {
         "/checkins on|off — мягкие напоминания, когда настроение, сон "
         "или тревога выглядят необычно. Включи, если хочешь, чтобы "
         "бот сам обращался, а не ждал твоего хода.\n\n"
+        "🫁 Трудные моменты\n"
+        "/breathe — квадратное дыхание или заземление 5-4-3-2-1, только касания. "
+        "Когда накрывает тревога или из-за мигрени трудно читать. После очень "
+        "тяжёлой оценки бот также покажет, что помогало тебе раньше.\n\n"
+        "🔒 Приватность и тишина\n"
+        "/hide — убрать с экрана последние 48 часов чата; записи сохранятся. "
+        "Когда кто-то может увидеть твой телефон.\n"
+        "/tidy on|off — заметки и записи мыслей исчезают из чата через 5 минут "
+        "после сохранения. Если не хочешь оставлять их на экране.\n"
+        "/pause [1d…14d|off] — тихий режим: без сводок, проверок и напоминаний, "
+        "пока не закончится. В дни, когда любое уведомление — слишком.\n\n"
         "⚙️ Настройки\n"
         "/tz <IANA> — часовой пояс, например /tz Europe/Berlin. "
         "Один раз при первом входе; границы дня зависят от него.\n"
