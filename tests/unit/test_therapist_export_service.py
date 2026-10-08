@@ -19,65 +19,16 @@ import pytest
 from cryptography.fernet import Fernet
 
 from app.domain.enums import MetricType
-from app.domain.models import Entry, User
+from app.domain.models import User
 from app.infrastructure.crypto import FernetCipher
 from app.services.entry_service import EntryService
 from app.services.therapist_export_service import (
     TherapistExportService,
     TherapistReportData,
 )
+from tests.unit.fakes import FakeEntryRepo
 
-
-class FakeRepo:
-    def __init__(self) -> None:
-        self.rows: list[Entry] = []
-        self._next = 1
-
-    async def add(self, entry: Entry) -> Entry:
-        entry.id = self._next
-        self._next += 1
-        self.rows.append(entry)
-        return entry
-
-    async def list_range(
-        self, user_id, start, end, metric_types=None
-    ):
-        out = []
-        for r in self.rows:
-            if r.user_id != user_id:
-                continue
-            if not (start <= r.entry_date <= end):
-                continue
-            if metric_types and r.metric_type not in metric_types:
-                continue
-            out.append(r)
-        return out
-
-    async def daily_aggregates(self, user_id, start, end):
-        # Aggregate numeric metrics per (date, metric_type).
-        bucket: dict[tuple[date, str], list[float]] = {}
-        for r in self.rows:
-            if r.user_id != user_id or r.value_numeric is None:
-                continue
-            if not (start <= r.entry_date <= end):
-                continue
-            bucket.setdefault((r.entry_date, r.metric_type), []).append(
-                float(r.value_numeric)
-            )
-        return [
-            (d, m, sum(vals) / len(vals), len(vals))
-            for (d, m), vals in bucket.items()
-        ]
-
-    async def get_for_user(self, entry_id, user_id):
-        for r in self.rows:
-            if r.id == entry_id and r.user_id == user_id:
-                return r
-        return None
-
-    async def exists(self, entry_id):
-        return any(r.id == entry_id for r in self.rows)
-
+FakeRepo = FakeEntryRepo
 
 @pytest.fixture()
 def cipher() -> FernetCipher:
