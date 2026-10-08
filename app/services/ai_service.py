@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime
 
+import pytz
 import structlog
 from anthropic import AsyncAnthropic
 
@@ -11,6 +12,18 @@ from app.ai.prompts import SYSTEM_PROMPT
 from app.ai.tools import TOOL_SCHEMAS, ToolArtifact, ToolDispatcher
 
 log = structlog.get_logger(__name__)
+
+_LANGUAGE_LINE = {
+    "en": "Reply in English.",
+    "ru": (
+        "Reply in Russian. Address the user informally (ты) and use feminine "
+        "grammatical forms for her (e.g. «ты спала», «ты отметила»)."
+    ),
+}
+_TOO_LONG = {
+    "en": "That took too long to work out — could you ask a narrower question?",
+    "ru": "Это заняло слишком много шагов — попробуй задать вопрос поуже?",
+}
 
 
 @dataclass
@@ -43,12 +56,17 @@ class AiService:
         today: date,
         *,
         target_language: str = "en",
+        now: datetime | None = None,
     ) -> AiAnswer:
-        lang_full = "Russian" if target_language == "ru" else "English"
+        tz_name = dispatcher.user_timezone
+        local_now = now or datetime.now(tz=pytz.timezone(tz_name))
         user_message = (
-            f"Today is {today.isoformat()} ({dispatcher.user_timezone}).\n"
-            f"Reply in {lang_full}.\n"
-            f"User question: {question}"
+            # Weekday + local time spelled out so the model never has to derive
+            # them ("this morning", "on Tuesday") from an ISO date.
+            f"Now: {today.strftime('%A')} {today.isoformat()}, "
+            f"{local_now.strftime('%H:%M')} ({tz_name}).\n"
+            f"{_LANGUAGE_LINE.get(target_language, _LANGUAGE_LINE['en'])}\n"
+            f"<question>\n{question}\n</question>"
         )
         messages: list[dict] = [{"role": "user", "content": user_message}]
 
@@ -59,6 +77,10 @@ class AiService:
                 system=SYSTEM_PROMPT,
                 tools=TOOL_SCHEMAS,
                 messages=messages,
+                # System prompt + tools are identical on every call and the tool
+                # loop resends the growing history, so cache the prefix. (A
+                # silent no-op while it's under the model's minimum length.)
+                cache_control={"type": "ephemeral"},
             )
 
             if response.stop_reason == "tool_use":
@@ -94,7 +116,8 @@ class AiService:
             text_parts = [b.text for b in response.content if b.type == "text"]
             return AiAnswer(text="\n".join(text_parts).strip(), artifacts=dispatcher.artifacts)
 
+        log.warning("ai_iteration_limit", iterations=self._max_iterations)
         return AiAnswer(
-            text="(stopped: too many tool iterations)",
+            text=_TOO_LONG.get(target_language, _TOO_LONG["en"]),
             artifacts=dispatcher.artifacts,
         )

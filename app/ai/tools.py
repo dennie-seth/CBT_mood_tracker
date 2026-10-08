@@ -180,6 +180,7 @@ class ToolDispatcher:
             entries.append(
                 {
                     "date": r.entry_date.isoformat(),
+                    "weekday": _weekday(local.date()),
                     "time": local.strftime("%H:%M"),
                     "recorded_at": local.isoformat(),
                     "metric_type": r.metric_type.value,
@@ -203,6 +204,7 @@ class ToolDispatcher:
             "days": [
                 {
                     "date": idx.date().isoformat(),
+                    "weekday": _weekday(idx.date()),
                     "metrics": {
                         c: (None if (v := row[c]) is None or _is_nan(v) else float(v))
                         for c in df.columns
@@ -249,6 +251,15 @@ class ToolDispatcher:
         fname = f"report_{start.isoformat()}_{end.isoformat()}.pdf"
         self.artifacts.append(ToolArtifact("application/pdf", fname, pdf))
         return {"artifact": fname, "ok": True}
+
+
+_WEEKDAYS = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+
+
+def _weekday(d: date) -> str:
+    """Locale-independent short weekday, so the model never has to compute
+    one from an ISO date (a common source of "on Tuesday" mistakes)."""
+    return _WEEKDAYS[d.weekday()]
 
 
 def _is_nan(v: object) -> bool:

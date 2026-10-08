@@ -12,8 +12,9 @@ DAILY_PROMPT = (
     "(1) Pull today's entries via the `query_entries` tool; read them in the "
     "order they were logged (use the local times) so the day's sequence is right. "
     "(2) Summarise mood, energy, sleep and any other tracked metrics in at most "
-    "four short bullet points, focusing on the day's dynamics — and, where the "
-    "timing makes it clear, what a note or event seemed to shift. "
+    "four short bullet points (start each with \"• \"), focusing on the day's "
+    "dynamics — and, where the timestamps show it, what followed a note or "
+    "event (say \"after\" / \"later\", not \"because\"). "
     "(3) Add ONE supportive tip grounded in what you saw. "
     "(4) If today has no entries at all, send a brief, warm acknowledgement and "
     "a single low-effort reflection prompt — do not lecture. "
@@ -22,7 +23,7 @@ DAILY_PROMPT = (
     "extra.planned_for <= today (user's tz), mention them in ONE sentence "
     "(e.g. 'You have N pending plan(s) for today: …'). Don't lecture, don't "
     "repeat if there are none. "
-    "Keep it under ~150 words."
+    "Plain text only (no Markdown). Keep it under ~150 words."
 )
 
 
@@ -37,9 +38,12 @@ WEEKLY_PROMPT = (
     "metric_types=['thought_record','trigger','activity','coping','substance',"
     "'symptom','note'] to see what actually happened; use the local timestamps "
     "to keep events in order. "
-    "(3) Connect events to numbers: name the 1-2 clearest cause→effect links you "
-    "can actually see in the data, citing the day (e.g. 'after <event> on Tue, "
-    "mood dropped 7→4 the next morning'). If nothing is clear, say so instead of "
+    "(3) Connect events to numbers: name the 1-2 clearest \"X was followed by Y\" "
+    "links, each checked against the recorded_at timestamps and citing the "
+    "weekday and time from the tool output (e.g. 'on Tue you noted a tense call "
+    "at 14:10; mood was 4 at 18:00, down from 7 that morning'). Say \"followed\" "
+    "or \"after\", not \"caused\" — unless the user's own note gives the reason, "
+    "and then attribute it to them. If nothing is clear, say so instead of "
     "guessing. "
     "(4) Call out ONE trend improving and ONE worsening or noisy, in plain "
     "language, interpreting the scales correctly (higher mood/energy/focus = "
@@ -47,6 +51,7 @@ WEEKLY_PROMPT = (
     "(5) Suggest a single concrete focus for next week grounded in the above. "
     "(6) Optionally call `generate_chart` once with mood + energy + anxiety so "
     "the user sees the picture. "
+    "Plain text only (no Markdown; lists start with \"• \"). "
     "Keep it under ~200 words."
 )
 
