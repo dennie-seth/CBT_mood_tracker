@@ -104,3 +104,44 @@ def parse_clock_time(raw: str, now_local: datetime) -> datetime:
     if isinstance(tz, pytz.BaseTzInfo):
         return tz.localize(naive)
     return naive.replace(tzinfo=tz)
+
+
+_YESTERDAY_WORDS = ("yesterday", "вчера")
+_DAY_MONTH_RE = re.compile(r"^(\d{1,2})\.(\d{1,2})$")
+
+
+def parse_moment(raw: str, now_local: datetime) -> datetime:
+    """Parse a typed point in time (migraine start/end) in the tz of `now_local`.
+
+    Accepts `HH:MM` (most recent such time), `yesterday HH:MM` / `вчера HH:MM`,
+    `DD.MM HH:MM` (this year, or last year if that would be in the future)
+    and `YYYY-MM-DD HH:MM`. Rejects future moments. Raises ValueError.
+    """
+    parts = raw.split() if isinstance(raw, str) else []
+    if len(parts) == 1:
+        return parse_clock_time(parts[0], now_local)
+    if len(parts) != 2:
+        raise ValueError(f"unrecognised moment {raw!r}")
+    day_raw, clock_raw = parts
+    m = _CLOCK_RE.match(clock_raw)
+    if not m:
+        raise ValueError(f"unrecognised time {clock_raw!r}; use HH:MM")
+    hour, minute = int(m.group(1)), int(m.group(2))
+
+    today = now_local.date()
+    if day_raw.lower() in _YESTERDAY_WORDS:
+        day = today - timedelta(days=1)
+    elif dm := _DAY_MONTH_RE.match(day_raw):
+        dd, mm = int(dm.group(1)), int(dm.group(2))
+        day = date(today.year, mm, dd)  # ValueError on 31.02 etc.
+        if day > today:
+            day = date(today.year - 1, mm, dd)
+    else:
+        day = date.fromisoformat(day_raw)
+
+    naive = datetime(day.year, day.month, day.day, hour, minute)  # range-checks
+    tz = now_local.tzinfo
+    moment = tz.localize(naive) if isinstance(tz, pytz.BaseTzInfo) else naive.replace(tzinfo=tz)
+    if moment > now_local:
+        raise ValueError(f"{raw!r} is in the future")
+    return moment

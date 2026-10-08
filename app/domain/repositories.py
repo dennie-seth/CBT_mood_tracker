@@ -44,6 +44,10 @@ class EntryRepository(Protocol):
         'not yours' from 'doesn't exist' when an authorisation check fails."""
         ...
 
+    async def delete(self, entry: Entry) -> None:
+        """Hard-delete an entry already loaded via `get_for_user`."""
+        ...
+
 
 __all__ = [
     "UserRepository",

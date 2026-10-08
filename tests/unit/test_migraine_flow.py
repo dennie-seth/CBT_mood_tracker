@@ -19,7 +19,7 @@ from app.bot.states import MigraineFlow
 from app.domain.enums import MetricType
 from app.domain.models import User
 from app.services.entry_service import EntryService
-from tests.unit.test_migraine_service import FakeRepo
+from tests.unit.fakes import FakeEntryRepo as FakeRepo
 
 
 @pytest.fixture()
@@ -193,5 +193,5 @@ async def test_over_on_already_ended_attack_fails_gracefully(state, user, repo, 
 
     stale = _cb(f"mg_end:{entry_id}")  # old button tapped again
     await h.over_tapped(stale, state, user, None, cipher)
-    assert "Couldn't save" in _last_text(stale)
+    assert "already closed" in _last_text(stale)
     assert await state.get_state() is None

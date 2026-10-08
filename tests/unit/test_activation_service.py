@@ -1,50 +1,19 @@
 """ActivationService: tiny façade over EntryService for BA plans."""
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 
 import pytest
 from cryptography.fernet import Fernet
 
 from app.domain.enums import MetricType
-from app.domain.models import Entry, User
+from app.domain.models import User
 from app.infrastructure.crypto import FernetCipher
 from app.services.activation_service import ActivationService
 from app.services.entry_service import EntryService
+from tests.unit.fakes import FakeEntryRepo
 
-
-class FakeRepo:
-    def __init__(self) -> None:
-        self.rows: list[Entry] = []
-        self._next = 1
-
-    async def add(self, entry: Entry) -> Entry:
-        entry.id = self._next
-        self._next += 1
-        self.rows.append(entry)
-        return entry
-
-    async def list_range(self, user_id, start, end, metric_types=None):
-        out = [
-            r for r in self.rows
-            if r.user_id == user_id and start <= r.entry_date <= end
-        ]
-        if metric_types:
-            out = [r for r in out if r.metric_type in metric_types]
-        return out
-
-    async def daily_aggregates(self, *a, **kw):
-        return []
-
-    async def get_for_user(self, entry_id, user_id):
-        for r in self.rows:
-            if r.id == entry_id and r.user_id == user_id:
-                return r
-        return None
-
-    async def exists(self, entry_id):
-        return any(r.id == entry_id for r in self.rows)
-
+FakeRepo = FakeEntryRepo
 
 @pytest.fixture()
 def cipher() -> FernetCipher:
@@ -69,7 +38,7 @@ def _plan_dto_for(svc, user, when, plan_text, predicted, status="scheduled"):
             "predicted_effect": predicted,
             "status": status,
         },
-        recorded_at=datetime(when.year, when.month, when.day, 12, 0, tzinfo=timezone.utc),
+        recorded_at=datetime(when.year, when.month, when.day, 12, 0, tzinfo=UTC),
     )
 
 

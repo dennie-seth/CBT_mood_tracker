@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 
 import pytz
+import structlog
 from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
@@ -23,10 +24,11 @@ from app.bot.keyboards import (
 from app.bot.states import MigraineFlow
 from app.domain.models import User
 from app.infrastructure.crypto import FernetCipher
-from app.services.migraine_service import SYMPTOMS, MigraineService
+from app.services.migraine_service import SYMPTOMS, MigraineError, MigraineService
 from app.services.time import now_in_tz, parse_clock_time, today_in_tz
 
 router = Router()
+log = structlog.get_logger(__name__)
 
 # Free-text steps shouldn't swallow other commands typed mid-flow.
 _NOT_A_COMMAND = ~F.text.startswith("/")
@@ -58,6 +60,16 @@ def _fmt_local(iso: str, tz_name: str) -> str:
     return local.strftime("%Y-%m-%d %H:%M")
 
 
+def _error_text(lang: str, exc: Exception) -> str:
+    """Friendly, translated text for a failed step. Logs only the error code
+    (never entry payloads)."""
+    if isinstance(exc, MigraineError):
+        log.info("migraine.step_failed", code=exc.code.value)
+        return t(lang, f"migraine.err.{exc.code.value}")
+    log.warning("migraine.step_failed", error_type=type(exc).__name__)
+    return t(lang, "migraine.err.generic")
+
+
 def _fmt_duration(minutes: int, lang: str) -> str:
     return t(lang, "migraine.duration", h=minutes // 60, m=minutes % 60)
 
@@ -82,8 +94,8 @@ async def cmd_migraine(
     cipher: FernetCipher,
 ) -> None:
     await state.clear()
-    ongoing = await _svc(session, cipher).list_ongoing(
-        user.id, on_or_before=today_in_tz(user.timezone)
+    ongoing = await _svc(session, cipher).list_open(
+        user.id, today=today_in_tz(user.timezone)
     )
     if ongoing:
         latest = ongoing[-1]
@@ -243,7 +255,7 @@ async def _save_start(
         )
     except (KeyError, ValueError) as e:
         await state.clear()
-        await _reply(event, t(user.language, "migraine.failed", err=e))
+        await _reply(event, _error_text(user.language, e))
         return
     await state.clear()
     await _reply(
@@ -283,7 +295,7 @@ async def over_tapped(
         await _svc(session, cipher).get_ongoing(entry_id, user)
     except (LookupError, ValueError) as e:
         await state.clear()
-        await _reply(cb, t(user.language, "migraine.failed", err=e))
+        await _reply(cb, _error_text(user.language, e))
         return
     await state.set_state(MigraineFlow.end_time)
     await state.set_data({"entry_id": entry_id})
@@ -326,7 +338,7 @@ async def _got_end_time(
         attack = await _svc(session, cipher).get_ongoing(entry_id, user)
     except (LookupError, ValueError) as e:
         await state.clear()
-        await _reply(event, t(user.language, "migraine.failed", err=e))
+        await _reply(event, _error_text(user.language, e))
         return
     started_iso = (attack.extra or {})["started_at"]
     if ended_at < datetime.fromisoformat(started_iso):
@@ -408,17 +420,21 @@ async def _save_end(
 ) -> None:
     data = await state.get_data()
     try:
-        dto = await _svc(session, cipher).end(
-            int(data["entry_id"]),
+        svc = _svc(session, cipher)
+        entry_id = int(data["entry_id"])
+        dto = await svc.end(
+            entry_id,
             user,
             ended_at=datetime.fromisoformat(data["ended_at"]),
-            peak_intensity=int(data["peak"]),
-            relief=relief,
-            medication_text=data.get("medication_text"),
+            peak=int(data["peak"]),
         )
+        if data.get("medication_text"):
+            dto = await svc.update(entry_id, user, medication_text=data["medication_text"])
+        if relief is not None:
+            dto = await svc.update(entry_id, user, relief=relief)
     except (KeyError, LookupError, ValueError) as e:
         await state.clear()
-        await _reply(event, t(user.language, "migraine.failed", err=e))
+        await _reply(event, _error_text(user.language, e))
         return
     await state.clear()
     await _reply(

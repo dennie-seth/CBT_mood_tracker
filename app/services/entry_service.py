@@ -26,6 +26,13 @@ def _check_text_size(name: str, value: str) -> None:
         )
 
 
+def _bucket(ts: datetime, user: User) -> tuple[datetime, date]:
+    """Normalise to aware UTC-able datetime and compute the user-tz day."""
+    if ts.tzinfo is None:
+        ts = pytz.utc.localize(ts)
+    return ts, ts.astimezone(pytz.timezone(user.timezone)).date()
+
+
 @dataclass(frozen=True, slots=True)
 class EntryDTO:
     id: int
@@ -68,11 +75,7 @@ class EntryService:
                 if k.endswith("_text") and isinstance(v, str):
                     _check_text_size(f"extra[{k}]", v)
 
-        ts = recorded_at or datetime.now(tz=pytz.utc)
-        if ts.tzinfo is None:
-            ts = pytz.utc.localize(ts)
-        user_tz = pytz.timezone(user.timezone)
-        bucket = ts.astimezone(user_tz).date()
+        ts, bucket = _bucket(recorded_at or datetime.now(tz=pytz.utc), user)
 
         encrypted_text = self._cipher.encrypt(value_text) if value_text else None
         # Encrypt any free-text values nested in metadata too.
@@ -116,27 +119,41 @@ class EntryService:
         new_extra: dict[str, Any],
         *,
         value_numeric: float | None = None,
+        recorded_at: datetime | None = None,
     ) -> EntryDTO:
-        """Replace an entry's `extra` JSONB (and optionally its numeric value).
+        """Replace an entry's `extra` JSONB (and optionally its numeric value
+        and timestamp).
 
         Single mutation path. Refuses if the entry doesn't exist or belongs
         to a different user (AuthZ chokepoint). `*_text` keys are encrypted
         before persisting; the same MAX_TEXT_BYTES cap applies as in `create`.
-        `value_numeric` is left untouched unless given — episode entries
-        (migraine) revise it to the peak when they're closed.
+        `value_numeric` / `recorded_at` are left untouched unless given —
+        episode entries (migraine) revise the peak and onset after the fact.
+        A new `recorded_at` re-buckets `entry_date` in the user's timezone.
         """
-        entry = await self._repo.get_for_user(entry_id, user.id)
-        if entry is None:
-            if await self._repo.exists(entry_id):
-                raise PermissionError(f"entry {entry_id} not accessible")
-            raise LookupError(f"entry {entry_id} not found")
+        entry = await self._owned(entry_id, user)
         for k, v in new_extra.items():
             if k.endswith("_text") and isinstance(v, str):
                 _check_text_size(f"extra[{k}]", v)
         entry.extra = self._encrypt_extra(new_extra)
         if value_numeric is not None:
             entry.value_numeric = Decimal(str(value_numeric))
+        if recorded_at is not None:
+            entry.recorded_at, entry.entry_date = _bucket(recorded_at, user)
         return self._to_dto(entry)
+
+    async def delete_for_user(self, entry_id: int, user: User) -> None:
+        """Hard-delete one entry. Same AuthZ chokepoint as `update_extra`."""
+        entry = await self._owned(entry_id, user)
+        await self._repo.delete(entry)
+
+    async def _owned(self, entry_id: int, user: User) -> Entry:
+        entry = await self._repo.get_for_user(entry_id, user.id)
+        if entry is None:
+            if await self._repo.exists(entry_id):
+                raise PermissionError(f"entry {entry_id} not accessible")
+            raise LookupError(f"entry {entry_id} not found")
+        return entry
 
     def _to_dto(self, e: Entry) -> EntryDTO:
         text = self._cipher.decrypt(e.value_text_encrypted) if e.value_text_encrypted else None
