@@ -180,6 +180,9 @@ Tests run with fake repositories — no Postgres or Anthropic API calls required
 
 ## Production (VDS) deployment
 
+**Continuous deployment:** merging to `main` deploys. The `tests` workflow runs on the push; when it passes, `.github/workflows/deploy.yml` POSTs to the GitLab pipeline trigger stored in the repository secret `GITLAB_DEPLOY_TRIGGER`, and GitLab CI builds and deploys `main`. Failed tests = no deploy. Redeploy manually from Actions → deploy → Run workflow. The trigger URL contains a token: keep it only in that secret, never in the repo.
+
+
 1. Provision a small VDS (any 1 GB RAM Linux box is enough for a single user).
 2. Install Docker + Docker Compose plugin.
 3. Clone the repo and create `/opt/mood_tracker/.env` (root:root, mode 0600).

@@ -8,7 +8,7 @@ Personal Telegram bot for **CBT (Cognitive Behavioural Therapy) self-tracking** 
 
 Single-user / small-circle; **strictly private** — only allow-listed Telegram IDs may use it; free-text fields are encrypted at rest with `cryptography.Fernet`.
 
-POC runs locally; production target is a single VDS via the existing `docker compose` stack.
+POC runs locally; production is a single VDS via the existing `docker compose` stack. **Merge to `main` == deploy**: `tests` passes → `.github/workflows/deploy.yml` fires the GitLab pipeline trigger (secret `GITLAB_DEPLOY_TRIGGER`). Never commit the trigger URL/token.
 
 ## Stack
 
