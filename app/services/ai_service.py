@@ -36,6 +36,10 @@ _TOO_LONG = {
 class AiAnswer:
     text: str
     artifacts: list[ToolArtifact]
+    # True when `text` is a canned _REFUSED / _TOO_LONG line rather than a
+    # model reply. Fine to show in /ask; proactive summaries must not store,
+    # send or stamp it as if it were a real summary.
+    fallback: bool = False
 
 
 class AiService:
@@ -106,6 +110,7 @@ class AiService:
                 return AiAnswer(
                     text=_REFUSED.get(target_language, _REFUSED["en"]),
                     artifacts=dispatcher.artifacts,
+                    fallback=True,
                 )
 
             if response.stop_reason == "tool_use":
@@ -145,4 +150,5 @@ class AiService:
         return AiAnswer(
             text=_TOO_LONG.get(target_language, _TOO_LONG["en"]),
             artifacts=dispatcher.artifacts,
+            fallback=True,
         )
