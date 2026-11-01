@@ -28,6 +28,12 @@ SummaryKind = Literal["daily", "weekly"]
 # How many prior weekly summaries to feed the model as continuity context.
 WEEKLY_CONTINUITY_COUNT = 3
 
+# How many canned fallback answers (refusal / iteration limit) we tolerate for
+# one (user, kind, local date) slot before stamping it anyway. Without a cap a
+# deterministic refusal would re-run the whole tool loop on every 60 s tick
+# until the day ends.
+MAX_FALLBACK_ATTEMPTS = 3
+
 
 class SummaryService:
     """Per-user proactive summary delivery via Haiku.
@@ -53,9 +59,15 @@ class SummaryService:
         self._chart = chart_service
         self._pdf = pdf_service
         self._bot = bot
+        # In-memory on purpose: one SummaryService lives for the process, and
+        # a restart resetting the count only costs a few extra attempts.
+        self._fallback_attempts: dict[tuple[int, SummaryKind, date], int] = {}
 
     async def send(self, user: User, *, kind: SummaryKind, local_today: date) -> None:
         # Order is deliberate: AI → stamp+commit → send.
+        #   - AI fallback (canned refusal / iteration-limit line): nothing
+        #     stored or sent; unstamped so a later tick retries, until
+        #     MAX_FALLBACK_ATTEMPTS, then stamped (still not stored or sent).
         #   - AI failure: nothing stamped, next tick retries (good).
         #   - Stamp/commit failure: nothing sent, next tick retries (good).
         #   - Send failure (post-stamp): the user misses today's summary, but
@@ -102,27 +114,48 @@ class SummaryService:
             )
 
             schedule_repo = SqlScheduleRepository(session)
-            if kind == "daily":
-                await schedule_repo.stamp_daily_sent(user.id, on=local_today)
-            else:
-                await schedule_repo.stamp_weekly_sent(user.id, on=local_today)
-                # Persist this week's summary (encrypted at rest) so next week
-                # can build on it. Same transaction as the stamp: if the commit
-                # fails, neither lands and the next tick retries cleanly.
-                if answer.text:
-                    await summary_repo.add(
-                        user.id,
-                        week_start=week_start,
-                        week_end=local_today,
-                        summary_text_encrypted=self._cipher.encrypt(answer.text),
-                    )
-                    log.info(
-                        "weekly_summary_stored",
-                        user_id=user.id,
-                        week_start=week_start.isoformat(),
-                        week_end=local_today.isoformat(),
-                        chars=len(answer.text),
-                    )
+            slot = (user.id, kind, local_today)
+            if answer.fallback:
+                # A canned line is not a summary: never store it (it would
+                # become next week's "memory") and never send it. Leave the
+                # slot unstamped so a later tick retries — up to a cap.
+                attempts = self._fallback_attempts.get(slot, 0) + 1
+                gave_up = attempts >= MAX_FALLBACK_ATTEMPTS
+                log.warning(
+                    "summary_ai_fallback",
+                    user_id=user.id,
+                    kind=kind,
+                    local_date=local_today.isoformat(),
+                    attempt=attempts,
+                    gave_up=gave_up,
+                )
+                if not gave_up:
+                    self._fallback_attempts[slot] = attempts
+                    return
+                self._fallback_attempts.pop(slot, None)
+                await self._stamp(schedule_repo, user.id, kind, local_today)
+                await session.commit()
+                return
+            self._fallback_attempts.pop(slot, None)
+
+            await self._stamp(schedule_repo, user.id, kind, local_today)
+            # Persist this week's summary (encrypted at rest) so next week can
+            # build on it. Same transaction as the stamp: if the commit fails,
+            # neither lands and the next tick retries cleanly.
+            if kind == "weekly" and answer.text:
+                await summary_repo.add(
+                    user.id,
+                    week_start=week_start,
+                    week_end=local_today,
+                    summary_text_encrypted=self._cipher.encrypt(answer.text),
+                )
+                log.info(
+                    "weekly_summary_stored",
+                    user_id=user.id,
+                    week_start=week_start.isoformat(),
+                    week_end=local_today.isoformat(),
+                    chars=len(answer.text),
+                )
             await session.commit()
 
         # Outside the session — at this point we've durably committed the
@@ -149,3 +182,12 @@ class SummaryService:
             local_date=local_today.isoformat(),
             artifact_count=len(answer.artifacts),
         )
+
+    @staticmethod
+    async def _stamp(
+        schedule_repo: SqlScheduleRepository, user_id: int, kind: SummaryKind, on: date
+    ) -> None:
+        if kind == "daily":
+            await schedule_repo.stamp_daily_sent(user_id, on=on)
+        else:
+            await schedule_repo.stamp_weekly_sent(user_id, on=on)

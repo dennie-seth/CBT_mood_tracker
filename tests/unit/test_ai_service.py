@@ -145,3 +145,24 @@ async def test_refusal_gets_a_gentle_localized_reply(lang, needle) -> None:
     out = await svc.answer("q", _FakeDispatcher(), date(2026, 10, 8),  # type: ignore[arg-type]
                            target_language=lang, now=NOW)
     assert needle in out.text.lower()
+
+
+# --- Canned fallbacks are flagged so callers can tell them from real replies --
+
+async def test_real_reply_is_not_flagged_as_fallback() -> None:
+    svc, _ = _service([_text("ok")])
+    out = await svc.answer("q", _FakeDispatcher(), date(2026, 10, 8), now=NOW)  # type: ignore[arg-type]
+    assert out.fallback is False
+
+
+async def test_refusal_answer_is_flagged_as_fallback() -> None:
+    refusal = SimpleNamespace(stop_reason="refusal", content=[], stop_details=None)
+    svc, _ = _service([refusal])
+    out = await svc.answer("q", _FakeDispatcher(), date(2026, 10, 8), now=NOW)  # type: ignore[arg-type]
+    assert out.fallback is True
+
+
+async def test_iteration_limit_answer_is_flagged_as_fallback() -> None:
+    svc, _ = _service([_tool_call(), _tool_call()], max_iterations=2)
+    out = await svc.answer("q", _FakeDispatcher(), date(2026, 10, 8), now=NOW)  # type: ignore[arg-type]
+    assert out.fallback is True
